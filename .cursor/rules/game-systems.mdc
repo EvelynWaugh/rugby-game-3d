@@ -1,0 +1,12 @@
+---
+description: Game logic conventions for Sky Sovereign 3D
+globs: src/systems/**,src/stores/**,src/hooks/use-game-loop.ts
+alwaysApply: false
+---
+
+# Game Systems
+
+- Keep game rules in `src/systems/` as pure functions
+- Zustand store holds state; components only render
+- Port behavior from `rugby-game/rugby-game.html` when in doubt
+- Do not put combat or win logic inside R3F components
