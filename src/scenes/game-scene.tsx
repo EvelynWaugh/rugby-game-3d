@@ -8,13 +8,14 @@ import { Particles, PigSplatParts, SmokeClouds } from '@/components/fx/explosion
 import { RugbyBall } from '@/components/munitions/rugby-ball'
 import { ShelterMesh } from '@/components/structures/shelter'
 import { Level1Outskirts } from '@/components/terrain/level-1-outskirts'
-import { DRONE_MODEL_PATH, PIG_MODEL_PATH } from '@/constants/game'
+import { ALL_MODEL_PATHS } from '@/constants/models'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { useGLTF } from '@react-three/drei'
 import { useGameStore } from '@/stores/use-game-store'
 
-useGLTF.preload(DRONE_MODEL_PATH)
-useGLTF.preload(PIG_MODEL_PATH)
+for (const path of ALL_MODEL_PATHS) {
+  useGLTF.preload(path)
+}
 
 function SceneLights() {
   return (

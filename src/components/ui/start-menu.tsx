@@ -45,7 +45,7 @@ export function StartMenu({ startSel, onSelectChange, onContinue }: StartMenuPro
         </button>
 
         <p className="mono mt-4 text-xs text-slate-500">
-          WASD steer · W forward · R/F altitude · SPACE drop munition
+          W/S forward/back · A/D strafe · R/F altitude · Q/E rotate · SPACE drop
         </p>
       </div>
     </div>

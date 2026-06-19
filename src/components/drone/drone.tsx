@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
-import { DRONE_MODEL_CONFIG, DRONE_MODEL_PATH } from '@/constants/game'
-import { GltfModel } from '@/components/models/gltf-model'
+import { StaticModel } from '@/components/models/static-model'
+import { DRONE_MODEL } from '@/constants/models'
 import { getActiveCurve } from '@/systems/setup-level'
 import { getDroneRotation } from '@/systems/update-drone'
 import { useGameStore } from '@/stores/use-game-store'
@@ -11,11 +11,11 @@ function PlaceholderDrone() {
   return (
     <group>
       <mesh castShadow>
-        <boxGeometry args={[1.2, 0.3, 1.2]} />
+        <boxGeometry args={[0.5, 0.15, 0.5]} />
         <meshStandardMaterial color="#3a4a5a" metalness={0.6} roughness={0.3} />
       </mesh>
-      <mesh position={[0, 0, -0.8]} castShadow>
-        <coneGeometry args={[0.15, 0.5, 4]} />
+      <mesh position={[0, 0, -0.35]} castShadow>
+        <coneGeometry args={[0.08, 0.25, 4]} />
         <meshStandardMaterial color="#00b4ff" emissive="#004466" emissiveIntensity={0.4} />
       </mesh>
     </group>
@@ -39,12 +39,11 @@ export function Drone() {
 
   return (
     <group ref={groupRef}>
-      <GltfModel
-        path={DRONE_MODEL_PATH}
-        scale={DRONE_MODEL_CONFIG.scale}
-        rotationY={DRONE_MODEL_CONFIG.rotationY}
-        offsetY={DRONE_MODEL_CONFIG.offsetY}
-        targetSize={DRONE_MODEL_CONFIG.targetSize}
+      <StaticModel
+        path={DRONE_MODEL.path}
+        targetSize={DRONE_MODEL.targetSize}
+        rotation={DRONE_MODEL.rotation}
+        scale={DRONE_MODEL.scale}
         fallback={<PlaceholderDrone />}
       />
     </group>

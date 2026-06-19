@@ -1,25 +1,39 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import type { Mesh } from 'three'
+import type { Group } from 'three'
+import { StaticModel } from '@/components/models/static-model'
+import { BALL_MODEL } from '@/constants/models'
 import type { Munition } from '@/types/game'
 
+function PlaceholderBall() {
+  return (
+    <mesh castShadow>
+      <sphereGeometry args={[0.2, 12, 8]} />
+      <meshStandardMaterial color="#c45c26" roughness={0.6} />
+    </mesh>
+  )
+}
+
 export function RugbyBall({ munition }: { munition: Munition }) {
-  const meshRef = useRef<Mesh>(null)
+  const groupRef = useRef<Group>(null)
 
   useFrame(() => {
-    if (!meshRef.current || munition.done) return
-    meshRef.current.position.set(munition.position.x, munition.position.y, munition.position.z)
-    meshRef.current.rotation.set(munition.rot, munition.rot * 0.7, munition.rot * 0.3)
-    const scale = munition.isBigBall ? 1.6 : 1
-    meshRef.current.scale.setScalar(scale)
+    if (!groupRef.current || munition.done) return
+    groupRef.current.position.set(munition.position.x, munition.position.y, munition.position.z)
+    groupRef.current.rotation.set(munition.rot, munition.rot * 0.7, munition.rot * 0.3)
+    const s = munition.isBigBall ? 1.4 : 1
+    groupRef.current.scale.setScalar(s)
   })
 
   if (munition.done) return null
 
   return (
-    <mesh ref={meshRef} castShadow>
-      <sphereGeometry args={[0.35, 12, 8]} />
-      <meshStandardMaterial color="#c45c26" roughness={0.6} metalness={0.1} />
-    </mesh>
+    <group ref={groupRef}>
+      <StaticModel
+        path={BALL_MODEL.path}
+        targetSize={BALL_MODEL.targetSize}
+        fallback={<PlaceholderBall />}
+      />
+    </group>
   )
 }

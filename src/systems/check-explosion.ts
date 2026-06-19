@@ -4,6 +4,7 @@ import {
   SCORE,
   SHELTER_EXPLOSION_DAMAGE,
 } from '@/constants/game'
+import { markSoldierDead } from '@/systems/soldier-death'
 import type {
   EnemyDrone,
   EwTower,
@@ -58,7 +59,7 @@ export function checkExplosion({
         s.hp = 0
       }
       if (s.hp <= 0) {
-        s.dead = true
+        markSoldierDead(s, 'shot')
         scoreDelta += s.pig ? SCORE.pigExplosion : SCORE.redSoldier
         if (s.pig) pigSplatPositions.push({ ...s.position })
       }

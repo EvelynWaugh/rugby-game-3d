@@ -24,6 +24,8 @@ export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, mu
     altitude,
     lateralVel: 0,
     altitudeVel: 0,
+    yaw: 0,
+    yawVel: 0,
     grounded: 0,
   }
 }
@@ -90,6 +92,8 @@ export function spawnEntitiesForLevel({
       visible: true,
       behavior: 'biped',
       jamOff: 0,
+      deathTimer: 0,
+      deathVariant: 'shot',
     })
   }
 
@@ -113,6 +117,8 @@ export function spawnEntitiesForLevel({
       visible: true,
       behavior: 'biped',
       jamOff: 0,
+      deathTimer: 0,
+      deathVariant: 'shot',
     })
   }
 

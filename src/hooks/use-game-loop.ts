@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber'
 import { DIFFICULTIES } from '@/constants/difficulty'
 import { useKeyboardInput } from '@/hooks/use-keyboard-input'
 import { checkAmmoGameOver, checkWin } from '@/systems/check-win'
+import { tickSoldierDeathTimers } from '@/systems/soldier-death'
 import { checkExplosion, createPigSplatFx, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
 import { getActiveCurve } from '@/systems/setup-level'
 import { dropMunition, updateMunitions } from '@/systems/update-munitions'
@@ -130,6 +131,8 @@ export function useGameLoop() {
     if (bulletResult.droneHit) drone.hit = bulletResult.droneHit
     particles.push(...bulletResult.sparks)
     bullets = filterBullets(bullets)
+
+    tickSoldierDeathTimers(soldiers)
 
     particles = updateParticles(particles)
     smoke = updateSmoke(smoke)

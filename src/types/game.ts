@@ -54,10 +54,13 @@ export interface Drone {
   altitude: number
   lateralVel: number
   altitudeVel: number
+  yaw: number
+  yawVel: number
   grounded: number
 }
 
-export type PigBehavior = 'biped' | 'flee'
+export type PigBehavior = 'biped' | 'flee' | 'aim'
+export type DeathVariant = 'abdominal' | 'shot'
 
 export interface Soldier {
   id: string
@@ -72,6 +75,8 @@ export interface Soldier {
   visible: boolean
   behavior: PigBehavior
   jamOff: number
+  deathTimer: number
+  deathVariant: DeathVariant
 }
 
 export interface Rat {
@@ -175,5 +180,6 @@ export interface InputState {
   forward: number
   lateral: number
   altitude: number
+  yaw: number
   drop: boolean
 }

@@ -8,6 +8,8 @@ export const DRONE_ACC = 0.4
 export const DRONE_FRICTION = 0.92
 export const PATH_CRUISE_SPEED = 0.00035
 export const PATH_BOOST_SPEED = 0.00055
+export const PATH_REVERSE_SPEED = 0.00045
+export const DRONE_YAW_SPEED = 0.045
 export const LANE_HALF = 25
 export const MIN_ALTITUDE = 3
 export const MAX_ALTITUDE = 40
@@ -27,23 +29,4 @@ export const SCORE = {
   ewTower: 400,
 } as const
 
-export const DRONE_MODEL_PATH = '/models/drone/drone.glb'
-export const PIG_MODEL_PATH = '/models/pig/pig.glb'
-
-export const DRONE_MODEL_CONFIG = {
-  scale: 1,
-  rotationY: 0,
-  offsetY: 0,
-  targetSize: 2.5,
-} as const
-
-export const PIG_MODEL_CONFIG = {
-  scale: 1,
-  rotationY: 0,
-  offsetY: 0,
-  targetSize: 2.2,
-  animations: {
-    biped: 'idle_biped',
-    flee: 'flee_quad',
-  },
-} as const
+// Model paths live in src/constants/models.ts

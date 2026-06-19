@@ -1,16 +1,19 @@
 import {
   DRONE_ACC,
   DRONE_FRICTION,
+  DRONE_YAW_SPEED,
   LANE_HALF,
   MAX_ALTITUDE,
   MIN_ALTITUDE,
   PATH_BOOST_SPEED,
   PATH_CRUISE_SPEED,
+  PATH_REVERSE_SPEED,
 } from '@/constants/game'
 import { DIFFICULTIES } from '@/constants/difficulty'
 import { clampPathOffsets, samplePath } from '@/systems/path-system'
 import { refreshDroneWorldPosition } from '@/systems/setup-level'
 import type { Drone, InputState, LevelConfig, Wind } from '@/types/game'
+import * as THREE from 'three'
 import { clamp } from '@/utils/math'
 import type { CatmullRomCurve3 } from 'three'
 
@@ -41,6 +44,7 @@ export function updateDrone({
   let forward = input.forward
   let lateral = input.lateral
   let altitude = input.altitude
+  let yaw = input.yaw
 
   if (levelData.wind) {
     drone.lateralVel += wind.x * 0.08
@@ -58,16 +62,21 @@ export function updateDrone({
     }
   }
 
-  const pathSpeed = PATH_CRUISE_SPEED + forward * PATH_BOOST_SPEED
-  drone.pathT = clamp(drone.pathT + pathSpeed, 0, 1)
+  let pathDelta = PATH_CRUISE_SPEED
+  if (forward > 0) pathDelta += forward * PATH_BOOST_SPEED
+  if (forward < 0) pathDelta += forward * PATH_REVERSE_SPEED
+  drone.pathT = clamp(drone.pathT + pathDelta, 0, 1)
 
   drone.lateralVel += lateral * DRONE_ACC
   drone.altitudeVel += altitude * DRONE_ACC
+  drone.yawVel += yaw * DRONE_YAW_SPEED
   drone.lateralVel *= DRONE_FRICTION
   drone.altitudeVel *= DRONE_FRICTION
+  drone.yawVel *= DRONE_FRICTION
 
   drone.lateral += drone.lateralVel * 0.15
   drone.altitude += drone.altitudeVel * 0.12
+  drone.yaw += drone.yawVel * 0.18
 
   const clamped = clampPathOffsets(drone.lateral, drone.altitude)
   drone.lateral = clamped.lateral
@@ -104,10 +113,13 @@ export function computeWind({
 }
 
 export function getDroneRotation(curve: CatmullRomCurve3, drone: Drone) {
-  return samplePath({
+  const sample = samplePath({
     curve,
     pathT: drone.pathT,
     lateral: drone.lateral,
     altitude: drone.altitude,
-  }).rotation
+  })
+  const rotation = new THREE.Euler().copy(sample.rotation)
+  rotation.y += drone.yaw
+  return rotation
 }

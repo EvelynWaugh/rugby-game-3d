@@ -1,4 +1,5 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
+import { markSoldierDead } from '@/systems/soldier-death'
 import { RAM_DAMAGE, RAM_RADIUS, SOLDIER_SHOOT_RANGE_SQ } from '@/constants/game'
 import type { Bullet, Drone, Munition, Soldier } from '@/types/game'
 import { dist3, distXZ, rand, uid } from '@/utils/math'
@@ -57,7 +58,7 @@ export function updateSoldiers({
 
     const dToDrone = dist3(drone.position, s.position)
     if (s.pig && !s.immune && dToDrone < RAM_RADIUS) {
-      s.dead = true
+      markSoldierDead(s, 'abdominal')
       ramKills.push(s)
       scoreDelta += 300
       droneDamage += RAM_DAMAGE
@@ -104,6 +105,7 @@ export function updateSoldiers({
       const dz = drone.position.z - s.position.z
       const dd = dx * dx + dz * dz
       if (dd < SOLDIER_SHOOT_RANGE_SQ) {
+        s.behavior = 'aim'
         const dist = Math.sqrt(dd) || 1
         bullets.push({
           id: uid('bullet'),
