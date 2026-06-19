@@ -21,12 +21,25 @@ export function useGameLoop() {
     if (state.gameState !== 'playing' || !state.drone || !state.levelData) return
 
     const curve = getActiveCurve(state.level)
-    const drone = { ...state.drone }
-    const soldiers = state.soldiers.map((s) => ({ ...s, position: { ...s.position }, velocity: { ...s.velocity } }))
+    const drone = {
+      ...state.drone,
+      position: { ...state.drone.position },
+      velocity: { ...state.drone.velocity },
+    }
+    const soldiers = state.soldiers.map((s) => ({
+      ...s,
+      position: { ...s.position },
+      spawnPosition: { ...s.spawnPosition },
+      velocity: { ...s.velocity },
+    }))
     const shelters = state.shelters.map((s) => ({ ...s, position: { ...s.position } }))
     const enemyDrones = state.enemyDrones.map((e) => ({ ...e, position: { ...e.position }, velocity: { ...e.velocity } }))
     const ewTowers = state.ewTowers.map((t) => ({ ...t, position: { ...t.position } }))
-    let munitions = state.munitions.map((m) => ({ ...m, position: { ...m.position }, velocity: { ...m.velocity } }))
+    let munitions = state.munitions.map((m) => ({
+      ...m,
+      position: { ...m.position },
+      velocity: { ...m.velocity },
+    }))
     let bullets = state.bullets.map((b) => ({ ...b, position: { ...b.position }, velocity: { ...b.velocity } }))
     let particles = [...state.particles]
     let smoke = [...state.smoke]
@@ -73,7 +86,12 @@ export function useGameLoop() {
       frame,
     })
 
-    const muniResult = updateMunitions({ munitions, wind: windResult.wind, frame })
+    const muniResult = updateMunitions({
+      munitions,
+      soldiers,
+      shelters,
+      wind: windResult.wind,
+    })
     smoke.push(...muniResult.smoke)
 
     for (const impact of muniResult.impacts) {

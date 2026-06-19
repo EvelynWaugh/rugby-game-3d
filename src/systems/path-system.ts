@@ -84,7 +84,7 @@ export function spawnAlongPath({
   const sample = samplePath({ curve, pathT, lateral, altitude: 0 })
   return {
     x: sample.position.x,
-    y: groundY + 1.5,
+    y: groundY,
     z: sample.position.z,
   }
 }

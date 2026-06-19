@@ -1,16 +1,23 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
 import { markSoldierDead } from '@/systems/soldier-death'
-import { RAM_DAMAGE, RAM_RADIUS, SOLDIER_SHOOT_RANGE_SQ } from '@/constants/game'
+import { RAM_DAMAGE, RAM_RADIUS, RAM_RADIUS_3D, SCORE, SOLDIER_SHOOT_RANGE_SQ } from '@/constants/game'
 import type { Bullet, Drone, Munition, Soldier } from '@/types/game'
 import { dist3, distXZ, rand, uid } from '@/utils/math'
 
-const ENEMY_MARGIN = 3.6
+const LEASH_RADIUS = 14
 
-function clampEnemyPosition(s: Soldier) {
-  if (s.position.x < -ENEMY_MARGIN) { s.position.x = -ENEMY_MARGIN; s.velocity.x = Math.abs(s.velocity.x || 0.1) }
-  if (s.position.x > ENEMY_MARGIN + 60) { s.position.x = ENEMY_MARGIN + 60; s.velocity.x = -Math.abs(s.velocity.x || 0.1) }
-  if (s.position.z < -500) { s.position.z = -500; s.velocity.z = Math.abs(s.velocity.z || 0.1) }
-  if (s.position.z > ENEMY_MARGIN) { s.position.z = ENEMY_MARGIN; s.velocity.z = -Math.abs(s.velocity.z || 0.1) }
+function leashToSpawn(s: Soldier) {
+  const anchor = s.spawnPosition
+  const dx = s.position.x - anchor.x
+  const dz = s.position.z - anchor.z
+  const dist = Math.hypot(dx, dz)
+  if (dist <= LEASH_RADIUS) return
+
+  const pull = (dist - LEASH_RADIUS) * 0.08
+  s.position.x -= (dx / dist) * pull
+  s.position.z -= (dz / dist) * pull
+  s.velocity.x *= 0.85
+  s.velocity.z *= 0.85
 }
 
 export interface SoldierUpdateResult {
@@ -54,13 +61,14 @@ export function updateSoldiers({
 
     s.position.x += s.velocity.x * 0.1
     s.position.z += s.velocity.z * 0.1
-    clampEnemyPosition(s)
+    leashToSpawn(s)
 
-    const dToDrone = dist3(drone.position, s.position)
-    if (s.pig && !s.immune && dToDrone < RAM_RADIUS) {
+    const horiz = distXZ(drone.position, s.position)
+    const close3d = dist3(drone.position, s.position)
+    if (s.pig && !s.immune && (horiz < RAM_RADIUS || close3d < RAM_RADIUS_3D)) {
       markSoldierDead(s, 'abdominal')
       ramKills.push(s)
-      scoreDelta += 300
+      scoreDelta += SCORE.pigRam
       droneDamage += RAM_DAMAGE
       droneHit = 8
       continue
@@ -86,7 +94,7 @@ export function updateSoldiers({
           flee = true
         }
       }
-      if (!flee && dToDrone < 12) {
+      if (!flee && horiz < 14) {
         s.behavior = 'flee'
         const dx = s.position.x - drone.position.x
         const dz = s.position.z - drone.position.z

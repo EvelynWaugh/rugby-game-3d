@@ -3,7 +3,7 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
-import { fitObjectToSize, enableShadows } from '@/utils/model-fit'
+import { fitObjectToSize, enableShadows, groundObjectToFloor } from '@/utils/model-fit'
 
 interface StaticModelProps {
   path: string
@@ -12,6 +12,7 @@ interface StaticModelProps {
   rotation?: [number, number, number]
   scale?: number
   tint?: string
+  ground?: boolean
   fallback?: React.ReactNode
 }
 
@@ -22,6 +23,7 @@ function StaticModelInner({
   rotation = [0, 0, 0],
   scale = 1,
   tint,
+  ground = false,
 }: Omit<StaticModelProps, 'fallback'>) {
   const { scene } = useGLTF(path)
 
@@ -29,6 +31,7 @@ function StaticModelInner({
     const cloned = cloneSkinned(scene) as THREE.Group
     enableShadows(cloned)
     fitObjectToSize(cloned, targetSize)
+    if (ground) groundObjectToFloor(cloned)
     if (tint) {
       const c = new THREE.Color(tint)
       cloned.traverse((child) => {
@@ -43,7 +46,7 @@ function StaticModelInner({
       })
     }
     return cloned
-  }, [scene, targetSize, tint])
+  }, [scene, targetSize, tint, ground])
 
   return (
     <group position={position} rotation={rotation} scale={scale}>

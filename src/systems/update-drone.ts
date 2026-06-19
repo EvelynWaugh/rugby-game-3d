@@ -1,20 +1,21 @@
+import { DIFFICULTIES } from '@/constants/difficulty'
 import {
   DRONE_ACC,
   DRONE_FRICTION,
   DRONE_YAW_SPEED,
   LANE_HALF,
   MAX_ALTITUDE,
+  MAX_DRONE_YAW,
   MIN_ALTITUDE,
   PATH_BOOST_SPEED,
   PATH_CRUISE_SPEED,
   PATH_REVERSE_SPEED,
 } from '@/constants/game'
-import { DIFFICULTIES } from '@/constants/difficulty'
 import { clampPathOffsets, samplePath } from '@/systems/path-system'
 import { refreshDroneWorldPosition } from '@/systems/setup-level'
 import type { Drone, InputState, LevelConfig, Wind } from '@/types/game'
-import * as THREE from 'three'
 import { clamp } from '@/utils/math'
+import * as THREE from 'three'
 import type { CatmullRomCurve3 } from 'three'
 
 export function updateDrone({
@@ -64,7 +65,7 @@ export function updateDrone({
 
   let pathDelta = PATH_CRUISE_SPEED
   if (forward > 0) pathDelta += forward * PATH_BOOST_SPEED
-  if (forward < 0) pathDelta += forward * PATH_REVERSE_SPEED
+  else if (forward < 0) pathDelta = forward * PATH_REVERSE_SPEED
   drone.pathT = clamp(drone.pathT + pathDelta, 0, 1)
 
   drone.lateralVel += lateral * DRONE_ACC
@@ -77,6 +78,7 @@ export function updateDrone({
   drone.lateral += drone.lateralVel * 0.15
   drone.altitude += drone.altitudeVel * 0.12
   drone.yaw += drone.yawVel * 0.18
+  drone.yaw = clamp(drone.yaw, -MAX_DRONE_YAW, MAX_DRONE_YAW)
 
   const clamped = clampPathOffsets(drone.lateral, drone.altitude)
   drone.lateral = clamped.lateral

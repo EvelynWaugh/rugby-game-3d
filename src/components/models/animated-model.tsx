@@ -4,7 +4,7 @@ import type { Group } from 'three'
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
-import { fitObjectToSize, enableShadows } from '@/utils/model-fit'
+import { fitObjectToSize, enableShadows, groundObjectToFloor } from '@/utils/model-fit'
 
 interface AnimatedModelProps {
   path: string
@@ -14,7 +14,6 @@ interface AnimatedModelProps {
   speed?: number
   rotation?: [number, number, number]
   scale?: number
-  onFinished?: () => void
   fallback?: React.ReactNode
 }
 
@@ -26,54 +25,39 @@ function AnimatedModelInner({
   speed = 1,
   rotation = [0, 0, 0],
   scale = 1,
-  onFinished,
 }: Omit<AnimatedModelProps, 'fallback'>) {
-  const groupRef = useRef<Group>(null)
+  const modelRef = useRef<Group>(null)
   const { scene, animations } = useGLTF(path)
 
   const model = useMemo(() => {
     const cloned = cloneSkinned(scene) as THREE.Group
     enableShadows(cloned)
     fitObjectToSize(cloned, targetSize)
+    groundObjectToFloor(cloned)
+    cloned.rotation.set(rotation[0], rotation[1], rotation[2])
+    cloned.scale.multiplyScalar(scale)
     return cloned
-  }, [scene, targetSize])
+  }, [scene, targetSize, rotation, scale])
 
-  const { actions, mixer } = useAnimations(animations, groupRef)
+  const { actions, names } = useAnimations(animations, modelRef)
 
   useEffect(() => {
-    if (!actions || animations.length === 0) return
+    if (!actions || names.length === 0) return
 
-    const name = clipName ?? animations[0]?.name
-    const action = name ? actions[name] : Object.values(actions)[0]
+    const clip = clipName && actions[clipName] ? clipName : names[0]
+    const action = clip ? actions[clip] : undefined
     if (!action) return
+
+    Object.values(actions).forEach((a) => a?.stop())
 
     action.reset()
     action.setEffectiveTimeScale(speed)
     action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)
     action.clampWhenFinished = !loop
-    action.fadeIn(0.15).play()
+    action.play()
+  }, [actions, names, clipName, loop, path, speed])
 
-    return () => {
-      action.fadeOut(0.1)
-    }
-  }, [actions, animations, clipName, loop, path, speed])
-
-  useEffect(() => {
-    if (!mixer || loop || !onFinished) return
-
-    function onFinishedEvent(e: { action?: THREE.AnimationAction }) {
-      if (e.action?.clampWhenFinished) onFinished?.()
-    }
-
-    mixer.addEventListener('finished', onFinishedEvent)
-    return () => mixer.removeEventListener('finished', onFinishedEvent)
-  }, [mixer, loop, onFinished])
-
-  return (
-    <group ref={groupRef} rotation={rotation} scale={scale}>
-      <primitive object={model} />
-    </group>
-  )
+  return <primitive ref={modelRef} object={model} />
 }
 
 export function AnimatedModel(props: AnimatedModelProps) {

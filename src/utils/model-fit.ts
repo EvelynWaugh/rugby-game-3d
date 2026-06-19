@@ -14,6 +14,12 @@ export function fitObjectToSize(object: THREE.Object3D, targetSize: number) {
   return fitScale
 }
 
+/** Shift model so the bottom of its bounding box sits at y=0 */
+export function groundObjectToFloor(object: THREE.Object3D) {
+  const box = new THREE.Box3().setFromObject(object)
+  object.position.y -= box.min.y
+}
+
 export function enableShadows(object: THREE.Object3D) {
   object.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {

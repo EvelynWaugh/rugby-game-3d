@@ -1,10 +1,4 @@
-import {
-  EXPLOSION_RADIUS,
-  EXPLOSION_RADIUS_RED,
-  SCORE,
-  SHELTER_EXPLOSION_DAMAGE,
-} from '@/constants/game'
-import { markSoldierDead } from '@/systems/soldier-death'
+import { applyExplosionDamage } from '@/systems/combat-hit'
 import type {
   EnemyDrone,
   EwTower,
@@ -15,7 +9,7 @@ import type {
   Soldier,
   Vec3,
 } from '@/types/game'
-import { distXZ, rand, uid } from '@/utils/math'
+import { rand, uid } from '@/utils/math'
 
 export interface ExplosionResult {
   big: boolean
@@ -42,70 +36,24 @@ export function checkExplosion({
   enemyDrones: EnemyDrone[]
   ewTowers: EwTower[]
 }): ExplosionResult {
-  let big = false
-  let scoreDelta = 0
+  const scoreDelta = applyExplosionDamage({
+    x,
+    z,
+    soldiers,
+    shelters,
+    enemyDrones,
+    ewTowers,
+  })
+
+  let big = scoreDelta > 0
   const pigSplatPositions: Vec3[] = []
-  const center: Vec3 = { x, y: 0.5, z }
-
   for (const s of soldiers) {
-    if (s.dead || s.immune) continue
-    const dd = distXZ(center, s.position)
-    const hitR = s.pig ? EXPLOSION_RADIUS : EXPLOSION_RADIUS_RED
-    if (dd < hitR) {
-      if (s.pig) {
-        const dmg = dd < 1.8 ? 2 : 1
-        s.hp -= dmg
-      } else {
-        s.hp = 0
-      }
-      if (s.hp <= 0) {
-        markSoldierDead(s, 'shot')
-        scoreDelta += s.pig ? SCORE.pigExplosion : SCORE.redSoldier
-        if (s.pig) pigSplatPositions.push({ ...s.position })
-      }
+    if (s.dead && s.deathTimer > 130 && s.pig) {
+      pigSplatPositions.push({ ...s.position })
     }
   }
 
-  for (const e of enemyDrones) {
-    if (e.dead || e.immune) continue
-    if (distXZ(center, e.position) < EXPLOSION_RADIUS) {
-      e.dead = true
-      scoreDelta += SCORE.enemyDrone
-    }
-  }
-
-  for (const sh of shelters) {
-    if (sh.dead) continue
-    const halfW = sh.w / 2 + 1.2
-    const halfH = sh.h / 2 + 1.2
-    if (
-      x > sh.position.x - halfW &&
-      x < sh.position.x + halfW &&
-      z > sh.position.z - halfH &&
-      z < sh.position.z + halfH
-    ) {
-      sh.hp -= SHELTER_EXPLOSION_DAMAGE
-      big = true
-      if (sh.hp <= 0) {
-        sh.dead = true
-        for (const rat of sh.rats) rat.dead = true
-        scoreDelta += sh.command ? SCORE.commandShelter : SCORE.shelter
-      }
-    }
-  }
-
-  for (const t of ewTowers) {
-    if (t.dead || t.immune) continue
-    if (distXZ(center, t.position) < EXPLOSION_RADIUS + 1) {
-      t.hp -= 30
-      if (t.hp <= 0) {
-        t.dead = true
-        scoreDelta += SCORE.ewTower
-        big = true
-      }
-    }
-  }
-
+  const center: Vec3 = { x, y: 0.5, z }
   const fx = createExplosionFx(center, big)
   for (const pos of pigSplatPositions) {
     const splat = createPigSplatFx(pos)
@@ -168,25 +116,10 @@ export function createPigSplatFx(position: Vec3): Pick<ExplosionResult, 'shake' 
       max: 55,
       type: 'body',
     },
-    {
-      id: uid('part'),
-      position: { ...position },
-      velocity: {
-        x: Math.cos(ba + Math.PI + rand(-0.6, 0.6)) * 0.35,
-        y: 0.25,
-        z: Math.sin(ba + Math.PI + rand(-0.6, 0.6)) * 0.35,
-      },
-      rot: rand(0, Math.PI * 2),
-      spin: rand(-0.22, 0.22),
-      life: 55,
-      max: 55,
-      type: 'head',
-    },
   ]
   const particles: Particle[] = []
-  const smoke: Smoke[] = []
 
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 12; i++) {
     const a = rand(0, Math.PI * 2)
     const sp = rand(0.15, 0.55)
     particles.push({
@@ -200,7 +133,7 @@ export function createPigSplatFx(position: Vec3): Pick<ExplosionResult, 'shake' 
     })
   }
 
-  return { shake: 1.4, particles, smoke, pigParts }
+  return { shake: 1.4, particles, smoke: [], pigParts }
 }
 
 export function updateParticles(particles: Particle[]) {

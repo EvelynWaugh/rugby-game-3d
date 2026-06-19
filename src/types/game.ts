@@ -65,6 +65,7 @@ export type DeathVariant = 'abdominal' | 'shot'
 export interface Soldier {
   id: string
   position: Vec3
+  spawnPosition: Vec3
   velocity: Vec3
   hp: number
   maxhp: number
@@ -127,6 +128,7 @@ export interface Munition {
   alt: number
   groundX: number
   groundZ: number
+  dropHeight: number
   rot: number
   spin: number
   isBigBall: boolean

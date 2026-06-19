@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Loader, Sky } from '@react-three/drei'
+import { Sky } from '@react-three/drei'
 import { FpvCamera } from '@/components/camera/fpv-camera'
 import { Drone } from '@/components/drone/drone'
 import { PigSoldier, RedSoldier } from '@/components/enemies/pig-soldier'
@@ -96,7 +96,6 @@ export function GameScene() {
           </Suspense>
         </Canvas>
       )}
-      {showCanvas && <Loader />}
     </div>
   )
 }

@@ -81,7 +81,8 @@ export function spawnEntitiesForLevel({
     })
     soldiers.push({
       id: uid('pig'),
-      position: pos,
+      position: { ...pos },
+      spawnPosition: { ...pos },
       velocity: { x: rand(-spd, spd), y: 0, z: rand(-spd, spd) },
       hp: 1,
       maxhp: 1,
@@ -106,7 +107,8 @@ export function spawnEntitiesForLevel({
     })
     soldiers.push({
       id: uid('red'),
-      position: pos,
+      position: { ...pos },
+      spawnPosition: { ...pos },
       velocity: { x: rand(-spd, spd), y: 0, z: rand(-spd, spd) },
       hp: 2,
       maxhp: 2,
