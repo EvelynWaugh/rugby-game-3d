@@ -1,93 +1,112 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
 import {
-  DRONE_ACC,
+  DRONE_BATTERY_DRAIN,
   DRONE_FRICTION,
-  DRONE_YAW_SPEED,
-  LANE_HALF,
+  DRONE_MAX_SPEED,
+  DRONE_THRUST,
+  DRONE_YAW_ACCEL,
+  DRONE_YAW_DAMPING,
+  DRONE_YAW_MAX,
   MAX_ALTITUDE,
-  MAX_DRONE_YAW,
   MIN_ALTITUDE,
-  PATH_BOOST_SPEED,
-  PATH_CRUISE_SPEED,
-  PATH_REVERSE_SPEED,
 } from '@/constants/game'
-import { clampPathOffsets, samplePath } from '@/systems/path-system'
-import { refreshDroneWorldPosition } from '@/systems/setup-level'
 import type { Drone, InputState, LevelConfig, Wind } from '@/types/game'
 import { clamp } from '@/utils/math'
 import * as THREE from 'three'
-import type { CatmullRomCurve3 } from 'three'
+
+const forwardDir = new THREE.Vector3()
+
+export function droneForwardVector(yaw: number, out = forwardDir) {
+  out.set(Math.sin(yaw), 0, -Math.cos(yaw))
+  return out
+}
 
 export function updateDrone({
   drone,
-  curve,
   input,
   wind,
   levelData,
   ewActive,
   frame,
+  difficulty,
 }: {
   drone: Drone
-  curve: CatmullRomCurve3
   input: InputState
   wind: Wind
   levelData: LevelConfig
   ewActive: boolean
   frame: number
+  difficulty: keyof typeof DIFFICULTIES
 }) {
   if (drone.grounded > 0) {
     drone.grounded--
-    drone.pathT += PATH_CRUISE_SPEED * 0.2
-    refreshDroneWorldPosition(drone, curve)
+    drone.velocity.x *= 0.9
+    drone.velocity.z *= 0.9
+    drone.yawVel *= 0.85
+    drone.position.x += drone.velocity.x
+    drone.position.z += drone.velocity.z
     return
   }
 
-  let forward = input.forward
-  let lateral = input.lateral
-  let altitude = input.altitude
-  let yaw = input.yaw
+  const horizSpeed = Math.hypot(drone.velocity.x, drone.velocity.z)
+  const motorsActive = input.forward !== 0 || input.altitude !== 0 || input.yaw !== 0
+
+  if (input.yaw !== 0) {
+    drone.yawVel += input.yaw * DRONE_YAW_ACCEL
+  }
+
+  drone.yawVel *= DRONE_YAW_DAMPING
+  drone.yawVel = clamp(drone.yawVel, -DRONE_YAW_MAX, DRONE_YAW_MAX)
+
+  const turnScale = 0.25 + 0.75 * Math.min(horizSpeed / 0.45, 1)
+  drone.yaw += drone.yawVel * turnScale
+
+  const fwd = droneForwardVector(drone.yaw)
+
+  if (input.forward !== 0) {
+    drone.velocity.x += fwd.x * input.forward * DRONE_THRUST
+    drone.velocity.z += fwd.z * input.forward * DRONE_THRUST
+  }
+
+  if (input.altitude !== 0) {
+    drone.velocity.y += input.altitude * DRONE_THRUST * 0.7
+  }
 
   if (levelData.wind) {
-    drone.lateralVel += wind.x * 0.08
-    drone.altitudeVel += wind.z * 0.08
+    drone.velocity.x += wind.x * 0.04
+    drone.velocity.z += wind.z * 0.02
   }
 
-  if (ewActive) {
-    drone.lateralVel *= 1.045
-    drone.altitudeVel *= 1.045
-    if (frame % 10 === 0) {
-      const ef = 0.9 + Math.random() * 2
-      const ea = Math.random() * Math.PI * 2
-      drone.lateralVel += Math.cos(ea) * ef * 0.1
-      drone.altitudeVel += Math.sin(ea) * ef * 0.1
-    }
+  if (ewActive && frame % 10 === 0) {
+    drone.velocity.x += (Math.random() - 0.5) * 0.06
+    drone.velocity.z += (Math.random() - 0.5) * 0.06
   }
 
-  let pathDelta = PATH_CRUISE_SPEED
-  if (forward > 0) pathDelta += forward * PATH_BOOST_SPEED
-  else if (forward < 0) pathDelta = forward * PATH_REVERSE_SPEED
-  drone.pathT = clamp(drone.pathT + pathDelta, 0, 1)
+  drone.velocity.x *= DRONE_FRICTION
+  drone.velocity.y *= 0.94
+  drone.velocity.z *= DRONE_FRICTION
 
-  drone.lateralVel += lateral * DRONE_ACC
-  drone.altitudeVel += altitude * DRONE_ACC
-  drone.yawVel += yaw * DRONE_YAW_SPEED
-  drone.lateralVel *= DRONE_FRICTION
-  drone.altitudeVel *= DRONE_FRICTION
-  drone.yawVel *= DRONE_FRICTION
+  const cappedHoriz = Math.hypot(drone.velocity.x, drone.velocity.z)
+  if (cappedHoriz > DRONE_MAX_SPEED) {
+    const scale = DRONE_MAX_SPEED / cappedHoriz
+    drone.velocity.x *= scale
+    drone.velocity.z *= scale
+  }
 
-  drone.lateral += drone.lateralVel * 0.15
-  drone.altitude += drone.altitudeVel * 0.12
-  drone.yaw += drone.yawVel * 0.18
-  drone.yaw = clamp(drone.yaw, -MAX_DRONE_YAW, MAX_DRONE_YAW)
+  drone.position.x += drone.velocity.x
+  drone.position.y += drone.velocity.y
+  drone.position.z += drone.velocity.z
 
-  const clamped = clampPathOffsets(drone.lateral, drone.altitude)
-  drone.lateral = clamped.lateral
-  drone.altitude = clamped.altitude
+  const prevY = drone.position.y
+  drone.position.y = clamp(drone.position.y, MIN_ALTITUDE, MAX_ALTITUDE)
+  if (drone.position.y !== prevY) drone.velocity.y *= 0.35
 
-  if (Math.abs(drone.lateral) >= LANE_HALF) drone.lateralVel *= 0.5
-  if (drone.altitude <= MIN_ALTITUDE || drone.altitude >= MAX_ALTITUDE) drone.altitudeVel *= 0.5
+  drone.altitude = drone.position.y
 
-  refreshDroneWorldPosition(drone, curve)
+  if (motorsActive) {
+    const drain = DRONE_BATTERY_DRAIN * DIFFICULTIES[difficulty].battery
+    drone.hp -= drain * (1 + horizSpeed * 0.35)
+  }
 
   if (drone.hit > 0) drone.hit--
 }
@@ -114,14 +133,8 @@ export function computeWind({
   return { wind, windPhase: nextPhase }
 }
 
-export function getDroneRotation(curve: CatmullRomCurve3, drone: Drone) {
-  const sample = samplePath({
-    curve,
-    pathT: drone.pathT,
-    lateral: drone.lateral,
-    altitude: drone.altitude,
-  })
-  const rotation = new THREE.Euler().copy(sample.rotation)
-  rotation.y += drone.yaw
-  return rotation
+export function getDroneRotation(drone: Drone) {
+  const pitch = clamp(-drone.velocity.y * 0.12, -0.3, 0.3)
+  const bank = clamp(-drone.yawVel * 14, -0.4, 0.4)
+  return new THREE.Euler(pitch, drone.yaw, bank)
 }

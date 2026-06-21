@@ -20,6 +20,48 @@ export function groundObjectToFloor(object: THREE.Object3D) {
   object.position.y -= box.min.y
 }
 
+export interface SkinnedFitResult {
+  scale: number
+  position: [number, number, number]
+}
+
+/** Fit a skinned character GLB to a target height and ground feet at y=0 */
+export function fitSkinnedToHeight(object: THREE.Object3D, targetHeight: number): SkinnedFitResult {
+  const meshes: THREE.SkinnedMesh[] = []
+  object.traverse((child) => {
+    if ((child as THREE.SkinnedMesh).isSkinnedMesh) meshes.push(child as THREE.SkinnedMesh)
+  })
+
+  const box = new THREE.Box3()
+  if (meshes.length > 0) {
+    for (const mesh of meshes) box.expandByObject(mesh)
+  } else {
+    box.setFromObject(object)
+  }
+
+  const size = box.getSize(new THREE.Vector3())
+  const scale = targetHeight / Math.max(size.y, 0.001)
+  const center = box.getCenter(new THREE.Vector3())
+
+  return {
+    scale,
+    position: [-center.x, -box.min.y, -center.z],
+  }
+}
+
+export function fixSkinnedMaterials(object: THREE.Object3D) {
+  object.traverse((child) => {
+    if (!(child as THREE.Mesh).isMesh) return
+    const mesh = child as THREE.Mesh
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of mats) {
+      if (!mat) continue
+      mat.side = THREE.DoubleSide
+      if (mat.transparent) mat.depthWrite = true
+    }
+  })
+}
+
 export function enableShadows(object: THREE.Object3D) {
   object.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {

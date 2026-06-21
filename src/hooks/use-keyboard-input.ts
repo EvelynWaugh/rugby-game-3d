@@ -19,11 +19,23 @@ export function useKeyboardInput() {
       }
       keys[e.key.toLowerCase()] = true
       if (e.key === ' ') keys.space = true
+      if (e.key === 'ArrowUp') keys.arrowup = true
+      if (e.key === 'ArrowDown') keys.arrowdown = true
+      if (e.key === 'ArrowLeft') keys.arrowleft = true
+      if (e.key === 'ArrowRight') keys.arrowright = true
+      if (e.key === 'PageUp') keys.pageup = true
+      if (e.key === 'PageDown') keys.pagedown = true
     }
 
     function onKeyUp(e: KeyboardEvent) {
       keys[e.key.toLowerCase()] = false
       if (e.key === ' ') keys.space = false
+      if (e.key === 'ArrowUp') keys.arrowup = false
+      if (e.key === 'ArrowDown') keys.arrowdown = false
+      if (e.key === 'ArrowLeft') keys.arrowleft = false
+      if (e.key === 'ArrowRight') keys.arrowright = false
+      if (e.key === 'PageUp') keys.pageup = false
+      if (e.key === 'PageDown') keys.pagedown = false
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -36,27 +48,23 @@ export function useKeyboardInput() {
 
   function readInput({ inverted }: { inverted: boolean }) {
     let forward = 0
-    let lateral = 0
     let altitude = 0
     let yaw = 0
 
     if (keys.w || keys.arrowup) forward += 1
     if (keys.s || keys.arrowdown) forward -= 1
-    if (keys.a || keys.arrowleft) lateral -= 1
-    if (keys.d || keys.arrowright) lateral += 1
-    if (keys.r) altitude += 1
-    if (keys.f) altitude -= 1
-    if (keys.q) yaw -= 1
-    if (keys.e) yaw += 1
+    if (keys.arrowleft || keys.a) yaw -= 1
+    if (keys.arrowright || keys.d) yaw += 1
+    if (keys.r || keys.pageup) altitude += 1
+    if (keys.f || keys.pagedown) altitude -= 1
 
     if (inverted) {
-      lateral = -lateral
       altitude = -altitude
       yaw = -yaw
     }
 
     const drop = Boolean(keys.space)
-    inputRef.current = { forward, lateral, altitude, yaw, drop }
+    inputRef.current = { forward, lateral: 0, altitude, yaw, drop }
     return inputRef.current
   }
 

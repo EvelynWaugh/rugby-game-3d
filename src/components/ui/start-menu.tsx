@@ -45,7 +45,7 @@ export function StartMenu({ startSel, onSelectChange, onContinue }: StartMenuPro
         </button>
 
         <p className="mono mt-4 text-xs text-slate-500">
-          W/S forward/back · A/D strafe · R/F altitude · Q/E bank (limited) · SPACE drop
+          ↑/↓ forward & back · ←/→ turn (360°) · R/F altitude · SPACE drop
         </p>
       </div>
     </div>

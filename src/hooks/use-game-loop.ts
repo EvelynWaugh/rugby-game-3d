@@ -4,7 +4,6 @@ import { useKeyboardInput } from '@/hooks/use-keyboard-input'
 import { checkAmmoGameOver, checkWin } from '@/systems/check-win'
 import { tickSoldierDeathTimers } from '@/systems/soldier-death'
 import { checkExplosion, createPigSplatFx, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
-import { getActiveCurve } from '@/systems/setup-level'
 import { dropMunition, updateMunitions } from '@/systems/update-munitions'
 import { computeWind, updateDrone } from '@/systems/update-drone'
 import { updateSoldiers } from '@/systems/update-soldiers'
@@ -20,7 +19,6 @@ export function useGameLoop() {
     const state = useGameStore.getState()
     if (state.gameState !== 'playing' || !state.drone || !state.levelData) return
 
-    const curve = getActiveCurve(state.level)
     const drone = {
       ...state.drone,
       position: { ...state.drone.position },
@@ -78,12 +76,12 @@ export function useGameLoop() {
 
     updateDrone({
       drone,
-      curve,
       input,
       wind: windResult.wind,
       levelData: state.levelData,
       ewActive,
       frame,
+      difficulty: state.difficulty,
     })
 
     const muniResult = updateMunitions({

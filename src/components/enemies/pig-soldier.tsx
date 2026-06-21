@@ -1,9 +1,9 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
-import { AnimatedModel } from '@/components/models/animated-model'
+import { PigAnimatedModel } from '@/components/models/pig-animated-model'
 import { WeaponAk } from '@/components/models/weapon-ak'
-import { PIG_ANIMS, type PigAnimKey } from '@/constants/models'
+import { type PigAnimKey } from '@/constants/models'
 import type { Soldier } from '@/types/game'
 import { useGameStore } from '@/stores/use-game-store'
 
@@ -16,9 +16,16 @@ function pickAnimKey(soldier: Soldier): PigAnimKey {
   if (soldier.dead) {
     return soldier.deathVariant === 'shot' ? 'deathShot' : 'deathAbdominal'
   }
+  if (soldier.behavior === 'shoot') return 'shoot'
   if (soldier.behavior === 'flee') return 'run'
   if (soldier.behavior === 'aim') return 'aim'
   return 'walkGun'
+}
+
+function showWeapon(soldier: Soldier, animKey: PigAnimKey) {
+  if (soldier.dead || soldier.weaponDropped) return false
+  if (animKey === 'aim' || animKey === 'shoot' || animKey === 'run') return false
+  return true
 }
 
 function PlaceholderPig({ tint = '#f4a6b8' }: { tint?: string }) {
@@ -38,7 +45,6 @@ function PlaceholderPig({ tint = '#f4a6b8' }: { tint?: string }) {
 
 export function PigUnit({ soldierId, tint }: PigUnitProps) {
   const groupRef = useRef<Group>(null)
-  const animKeyRef = useRef<PigAnimKey>('walkGun')
 
   useFrame(() => {
     const soldier = useGameStore.getState().soldiers.find((s) => s.id === soldierId)
@@ -53,8 +59,6 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
       const dz = drone.position.z - soldier.position.z
       groupRef.current.rotation.y = Math.atan2(dx, dz)
     }
-
-    animKeyRef.current = pickAnimKey(soldier)
   })
 
   const soldier = useGameStore((s) => s.soldiers.find((x) => x.id === soldierId))
@@ -62,18 +66,14 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
   if (soldier.dead && soldier.deathTimer <= 0) return null
 
   const animKey = pickAnimKey(soldier)
-  const anim = PIG_ANIMS[animKey]
 
   return (
     <group ref={groupRef}>
-      <AnimatedModel
-        key={`${soldierId}-${animKey}`}
-        path={anim.path}
-        targetSize={anim.targetSize}
-        loop={anim.loop}
+      <PigAnimatedModel
+        animKey={animKey}
         fallback={<PlaceholderPig tint={tint} />}
       />
-      {!soldier.dead && animKey !== 'aim' && <WeaponAk />}
+      {showWeapon(soldier, animKey) && <WeaponAk />}
     </group>
   )
 }

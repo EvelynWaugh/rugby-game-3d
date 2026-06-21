@@ -28,7 +28,8 @@ export function applyExplosionDamage({
     if (dd >= hitR) continue
 
     if (s.pig) {
-      s.hp -= dd < 2 ? 2 : 1
+      const dmg = dd < hitR * 0.45 ? 2 : 1
+      s.hp -= dmg
     } else {
       s.hp = 0
     }
@@ -80,24 +81,15 @@ export function applyExplosionDamage({
   return scoreDelta
 }
 
-export function findProximityDetonation({
+export function findShelterProximityDetonation({
   x,
   z,
-  soldiers,
   shelters,
 }: {
   x: number
   z: number
-  soldiers: Soldier[]
   shelters: Shelter[]
 }): boolean {
-  const center = { x, y: 0, z }
-
-  for (const s of soldiers) {
-    if (s.dead || s.immune) continue
-    if (distXZ(center, s.position) < (s.pig ? 5 : 6)) return true
-  }
-
   for (const sh of shelters) {
     if (sh.dead) continue
     const halfW = sh.w / 2 + 1

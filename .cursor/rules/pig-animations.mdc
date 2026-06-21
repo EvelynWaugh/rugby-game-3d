@@ -1,0 +1,42 @@
+---
+description: Single-file pig.glb animation clips and state machine
+globs: src/components/models/pig-animated-model.tsx,src/components/enemies/pig-soldier.tsx,src/constants/models.ts,src/systems/update-soldiers.ts
+alwaysApply: false
+---
+
+# Pig Animations (single GLB)
+
+All pig clips live in **`public/models/pig/pig.glb`**. Registry: `PIG_MODEL` + `PIG_CLIPS` in `src/constants/models.ts`.
+
+## Clip names (inside pig.glb)
+
+| Key | Clip name | Loop |
+|-----|-----------|------|
+| walkGun | Walk_Left_with_Gun | yes |
+| run | Running | yes |
+| aim | Archery_Aim_with_Lateral_Scan | yes |
+| shoot | Archery_Shot_2 | no |
+| deathAbdominal | Fall_Dead_from_Abdominal_Injury | no |
+| deathShot | Shot_in_the_Back_and_Fall | no |
+
+## Component pattern
+
+- Use `PigAnimatedModel` — one `useGLTF` load, `SkeletonUtils.clone`, `useAnimations(animations, cloneRef)` on the **cloned mesh ref** (not the parent group).
+- Crossfade with `fadeIn` / `fadeOut` when switching clips; do **not** remount the model per state.
+- AK weapon is a separate `WeaponAk` attach — hidden during aim/shoot/run and when `weaponDropped`.
+
+## Behavior → animation
+
+| `Soldier.behavior` | Clip | Notes |
+|--------------------|------|-------|
+| biped | walkGun | patrol |
+| aim | aim | drone in range, on cooldown |
+| shoot | shoot | fires bullet, `shootTimer` counts down |
+| flee | run | cowardly pigs or incoming munition; drops weapon |
+| dead | deathAbdominal / deathShot | by `deathVariant` |
+
+## AI (update-soldiers.ts)
+
+- `cowardly` pigs (~45%) flee when drone within 14m and spot range 22m.
+- Non-cowardly pigs aim/shoot instead of fleeing.
+- Fleeing always sets `weaponDropped = true`.

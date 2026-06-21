@@ -67,6 +67,7 @@ export function Hud() {
 
         <div className="mono text-right text-[10px] text-slate-500">
           <p className={ewActive ? 'text-purple-400' : ''}>{scramble(windStr, ewActive)}</p>
+          <p>R / F · altitude · Space drop</p>
           {ewActive && <p className="text-purple-400 animate-pulse">EW JAMMING ACTIVE</p>}
         </div>
       </div>

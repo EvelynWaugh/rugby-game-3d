@@ -1,5 +1,5 @@
 import { MUNITION_FALL_RATE, MUNITION_FALL_RATE_BIG } from '@/constants/game'
-import { findProximityDetonation } from '@/systems/combat-hit'
+import { findShelterProximityDetonation } from '@/systems/combat-hit'
 import type { Drone, Munition, Shelter, Smoke, Soldier, Wind } from '@/types/game'
 import { rand, uid } from '@/utils/math'
 
@@ -11,6 +11,7 @@ export function dropMunition(drone: Drone): Munition | null {
   else drone.munitions--
 
   const inherit = isBigBall ? 0.55 : 0.4
+  const dropHeight = Math.max(drone.position.y, 6)
 
   return {
     id: uid('muni'),
@@ -23,7 +24,7 @@ export function dropMunition(drone: Drone): Munition | null {
     alt: 1,
     groundX: drone.position.x,
     groundZ: drone.position.z,
-    dropHeight: Math.max(drone.altitude, 8),
+    dropHeight,
     rot: rand(0, Math.PI * 2),
     spin: rand(isBigBall ? 0.08 : 0.15, isBigBall ? 0.15 : 0.25),
     isBigBall,
@@ -33,7 +34,6 @@ export function dropMunition(drone: Drone): Munition | null {
 
 export function updateMunitions({
   munitions,
-  soldiers,
   shelters,
   wind,
 }: {
@@ -59,14 +59,13 @@ export function updateMunitions({
     m.position.y = Math.max(0.35, m.alt * dropHeight)
     m.rot += m.spin
 
-    const nearTarget = m.alt < 0.55 && findProximityDetonation({
+    const nearShelter = m.alt < 0.45 && findShelterProximityDetonation({
       x: m.position.x,
       z: m.position.z,
-      soldiers,
       shelters,
     })
 
-    if (m.alt <= 0 || nearTarget) {
+    if (m.alt <= 0 || nearShelter) {
       m.done = true
       m.position.y = 0.35
       impacts.push(m)

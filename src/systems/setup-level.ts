@@ -7,12 +7,10 @@ import type { CatmullRomCurve3 } from 'three'
 export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, muni = 0, hasBigBall = false): Drone {
   const maxhp = Math.round(100 * DIFFICULTIES[difficulty].battery)
   const pathT = 0.02
-  const lateral = 0
-  const altitude = 12
-  const sample = samplePath({ curve, pathT, lateral, altitude })
+  const sample = samplePath({ curve, pathT, lateral: 0, altitude: 0 })
 
   return {
-    position: { x: sample.position.x, y: sample.position.y, z: sample.position.z },
+    position: { x: sample.position.x, y: 12, z: sample.position.z },
     velocity: { x: 0, y: 0, z: 0 },
     hp: maxhp,
     maxhp,
@@ -20,11 +18,11 @@ export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, mu
     hasBigBall,
     hit: 0,
     pathT,
-    lateral,
-    altitude,
+    lateral: 0,
+    altitude: 12,
     lateralVel: 0,
     altitudeVel: 0,
-    yaw: 0,
+    yaw: Math.atan2(sample.tangent.x, -sample.tangent.z),
     yawVel: 0,
     grounded: 0,
   }
@@ -92,6 +90,9 @@ export function spawnEntitiesForLevel({
       immune: lvImmune,
       visible: true,
       behavior: 'biped',
+      cowardly: Math.random() < 0.45,
+      weaponDropped: false,
+      shootTimer: 0,
       jamOff: 0,
       deathTimer: 0,
       deathVariant: 'shot',
@@ -118,6 +119,9 @@ export function spawnEntitiesForLevel({
       immune: lvImmune,
       visible: true,
       behavior: 'biped',
+      cowardly: Math.random() < 0.3,
+      weaponDropped: false,
+      shootTimer: 0,
       jamOff: 0,
       deathTimer: 0,
       deathVariant: 'shot',

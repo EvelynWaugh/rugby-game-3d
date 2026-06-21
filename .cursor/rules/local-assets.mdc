@@ -1,0 +1,38 @@
+---
+description: Local 3D assets in public/models — present on disk, gitignored GLBs
+globs: public/models/**,src/constants/models.ts,src/components/models/**
+alwaysApply: true
+---
+
+# Local 3D Assets
+
+**The user has real GLB models on disk.** Do NOT assume models are missing because search/glob returns empty — `*.glb` files are gitignored but exist locally.
+
+Inventory is in `public/models/MANIFEST.md` and `src/constants/models.ts`.
+
+## Layout (always present locally)
+
+```
+public/models/
+  drone/drone.glb
+  ball/ball.glb
+  weapon/ak/ak.glb
+  pig/pig.glb              — single skinned pig with all animation clips
+```
+
+Legacy per-clip pig GLBs may still exist on disk but are **not used** — all clips are in `pig.glb`.
+
+## Pig animations
+
+Clip names are mapped in `PIG_CLIPS` (`src/constants/models.ts`). Inspect clips:
+
+```bash
+npx @gltf-transform/cli inspect public/models/pig/pig.glb
+```
+
+Use `PigAnimatedModel` with crossfade — `SkeletonUtils.clone` + `useAnimations(animations, cloneRef)` on the cloned Object3D.
+
+## Agent tooling
+
+- Use shell `Get-ChildItem public/models -Recurse` to list files when glob fails.
+- Never replace GLB models with placeholders unless the user asks.
