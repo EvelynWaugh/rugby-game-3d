@@ -44,7 +44,7 @@ export const DRONE_MODEL: ModelFitConfig = {
   path: '/models/drone/drone.glb',
   targetSize: 0.35,
   scale: 1,
-  rotation: [Math.PI / 2, 0, 0],
+  rotation: [0, Math.PI, 0],
   offset: [0, 0, 0],
 }
 

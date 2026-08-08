@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 import type { Group } from 'three'
 import { StaticModel } from '@/components/models/static-model'
 import { DRONE_MODEL } from '@/constants/models'
@@ -21,12 +22,19 @@ export function Drone() {
   const orientationRef = useRef<Group>(null)
   const hasDrone = useGameStore((s) => s.drone !== null)
 
-  useFrame(() => {
+  const visualYaw = useRef(0)
+
+  useFrame((state, delta) => {
     const drone = useGameStore.getState().drone
     if (!drone || !bodyRef.current || !orientationRef.current) return
 
     bodyRef.current.position.set(drone.position.x, drone.position.y - 0.1, drone.position.z)
-    orientationRef.current.rotation.set(0, drone.yaw, 0)
+    
+    // Smoothly interpolate the visual rotation toward the target physics rotation (-drone.yaw)
+    // Adjust the 0.1 factor (closer to 1 = faster snap, closer to 0 = smoother/slower)
+    visualYaw.current = THREE.MathUtils.lerp(visualYaw.current, -drone.yaw, 0.15)
+    
+    orientationRef.current.rotation.set(0, visualYaw.current, 0)
   })
 
   if (!hasDrone) return null
