@@ -45,6 +45,7 @@ export function Drone() {
         <StaticModel
           path={DRONE_MODEL.path}
           targetSize={DRONE_MODEL.targetSize}
+          position={DRONE_MODEL.offset}
           rotation={DRONE_MODEL.rotation}
           scale={DRONE_MODEL.scale}
           fallback={<PlaceholderDrone />}

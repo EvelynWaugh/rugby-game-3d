@@ -10,10 +10,12 @@ const forward = new THREE.Vector3()
 const desiredPos = new THREE.Vector3()
 const worldUp = new THREE.Vector3(0, 1, 0)
 
-const CAM_BEHIND = 0.42
-const CAM_ABOVE = 0.55
-const LOOK_AHEAD_BASE = 2.6
-const LOOK_AHEAD_SPEED = 4
+const CAM_BEHIND = 0.52
+const CAM_ABOVE = 0.5
+/** Short look-ahead when still so the rear fuselage / rugby rack stays in frame */
+const LOOK_AHEAD_BASE = 0.35
+const LOOK_AHEAD_SPEED = 3.6
+const LOOK_AT_DROP = 0.28
 
 export function FpvCamera() {
   const { camera } = useThree()
@@ -43,10 +45,12 @@ export function FpvCamera() {
     smoothedPos.current.lerp(desiredPos, 0.72)
     camera.position.copy(smoothedPos.current)
 
+    const lookDrop = LOOK_AT_DROP * (1 - speedT * 0.85)
+
     lookTarget
       .copy(drone.position)
       .addScaledVector(forward, lookAhead)
-      .add(new THREE.Vector3(0, 0.04, 0))
+      .add(new THREE.Vector3(0, -lookDrop, 0))
 
     camera.up.copy(worldUp)
     camera.lookAt(lookTarget)

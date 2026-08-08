@@ -4,7 +4,7 @@ GLB binaries are gitignored (too large) but **must exist locally** for the game 
 
 | Path | Purpose |
 |------|---------|
-| `drone/drone.glb` | Player drone |
+| `drone/drone.glb` | Player drone — see **Drone** section in `public/models/README.md` |
 | `ball/ball.glb` | Rugby munition |
 | `weapon/ak/ak.glb` | AK attached to pigs |
 | `pig/pig.glb` | Skinned pig — all animation clips in one file |

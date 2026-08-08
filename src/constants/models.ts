@@ -37,15 +37,16 @@ export const PIG_DEATH_FRAMES = 140
 export const PIG_SHOOT_FRAMES = 90
 
 /**
- * Blender / example frame: forward −Y, up +Z. Rx(+π/2) → game forward −Z, up +Y.
- * Model is authored correctly in Blender — no yaw flip.
+ * Blender glTF: forward −Y, up +Z. Ry(π) aligns authored nose with game forward (−Z) after Y-up remap.
+ * Visual yaw is applied in drone.tsx (rotation.y = −drone.yaw) — do not add a yaw flip here.
  */
 export const DRONE_MODEL: ModelFitConfig = {
   path: '/models/drone/drone.glb',
-  targetSize: 0.35,
+  targetSize: 0.42,
   scale: 1,
   rotation: [0, Math.PI, 0],
-  offset: [0, 0, 0],
+  /** Nudge toward chase cam so rear fuselage + rugby rack stay in the lower FOV */
+  offset: [0, 0.04, -0.12],
 }
 
 export const BALL_MODEL: ModelFitConfig = {

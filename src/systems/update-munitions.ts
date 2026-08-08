@@ -1,7 +1,11 @@
 import { MUNITION_FALL_RATE, MUNITION_FALL_RATE_BIG } from '@/constants/game'
 import { findShelterProximityDetonation } from '@/systems/combat-hit'
+import { droneForwardVector } from '@/systems/update-drone'
 import type { Drone, Munition, Shelter, Smoke, Soldier, Wind } from '@/types/game'
 import { rand, uid } from '@/utils/math'
+import * as THREE from 'three'
+
+const dropForward = new THREE.Vector3()
 
 export function dropMunition(drone: Drone): Munition | null {
   if (drone.munitions <= 0 && !drone.hasBigBall) return null
@@ -13,17 +17,22 @@ export function dropMunition(drone: Drone): Munition | null {
   const inherit = isBigBall ? 0.55 : 0.4
   const dropHeight = Math.max(drone.position.y, 6)
 
+  const fwd = droneForwardVector(drone.yaw, dropForward)
+  const spawnX = drone.position.x - fwd.x * 0.14
+  const spawnY = drone.position.y - 0.12
+  const spawnZ = drone.position.z - fwd.z * 0.14
+
   return {
     id: uid('muni'),
-    position: { ...drone.position },
+    position: { x: spawnX, y: spawnY, z: spawnZ },
     velocity: {
       x: drone.velocity.x * inherit,
       y: 0,
       z: drone.velocity.z * inherit,
     },
     alt: 1,
-    groundX: drone.position.x,
-    groundZ: drone.position.z,
+    groundX: spawnX,
+    groundZ: spawnZ,
     dropHeight,
     rot: rand(0, Math.PI * 2),
     spin: rand(isBigBall ? 0.08 : 0.15, isBigBall ? 0.15 : 0.25),

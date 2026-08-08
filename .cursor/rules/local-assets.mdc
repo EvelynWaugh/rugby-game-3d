@@ -1,6 +1,6 @@
 ---
 description: Local 3D assets in public/models — present on disk, gitignored GLBs
-globs: public/models/**,src/constants/models.ts,src/components/models/**
+globs: public/models/**,src/constants/models.ts,src/components/models/**,src/components/drone/**,src/components/camera/fpv-camera.tsx,src/systems/update-drone.ts
 alwaysApply: true
 ---
 
@@ -31,6 +31,16 @@ npx @gltf-transform/cli inspect public/models/pig/pig.glb
 ```
 
 Use `PigAnimatedModel` with crossfade — `SkeletonUtils.clone` + `useAnimations(animations, cloneRef)` on the cloned Object3D.
+
+## Drone model
+
+- Path: `drone/drone.glb` — config in `DRONE_MODEL` (`src/constants/models.ts`).
+- **Blender axes (raw GLB):** forward **−Y**, up **+Z**; rugby mesh on the **rear**, not the nose.
+- **Game:** Y-up, path on XZ, physics yaw on world Y, forward `droneForwardVector` (−Z at yaw 0).
+- **Loading:** `StaticModel` applies `DRONE_MODEL.rotation` + `targetSize` fit; `drone.tsx` sets `rotation.y = −drone.yaw` (smoothed).
+- **Camera:** `FpvCamera` tracks `droneForwardVector` — keep mesh/camera/physics in sync; do not reintroduce extra Euler flips on the GLB without testing.
+- **Preview:** `GameSceneExample` / `drone-example.tsx` loads the raw scene (Blender-style controls) — not identical to in-game orientation.
+- Details: `public/models/README.md`.
 
 ## Agent tooling
 
