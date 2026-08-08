@@ -36,12 +36,15 @@ export type PigAnimKey = keyof typeof PIG_CLIPS
 export const PIG_DEATH_FRAMES = 140
 export const PIG_SHOOT_FRAMES = 90
 
-/** GLB nose is +X, rugby munition on −X (back). Ry(+π/2) maps nose onto game forward (−Z). */
+/**
+ * Blender / example frame: forward −Y, up +Z. Rx(+π/2) → game forward −Z, up +Y.
+ * Model is authored correctly in Blender — no yaw flip.
+ */
 export const DRONE_MODEL: ModelFitConfig = {
   path: '/models/drone/drone.glb',
   targetSize: 0.35,
   scale: 1,
-  rotation: [0, Math.PI / 2, 0],
+  rotation: [Math.PI / 2, 0, 0],
   offset: [0, 0, 0],
 }
 

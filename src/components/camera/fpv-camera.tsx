@@ -2,14 +2,13 @@ import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { DRONE_MAX_SPEED } from '@/constants/game'
-import { getDroneQuaternion } from '@/systems/update-drone'
+import { droneForwardVector } from '@/systems/update-drone'
 import { useGameStore } from '@/stores/use-game-store'
 
 const lookTarget = new THREE.Vector3()
-const noseDir = new THREE.Vector3()
-const camOffset = new THREE.Vector3()
-const up = new THREE.Vector3(0, 1, 0)
-const droneQuat = new THREE.Quaternion()
+const forward = new THREE.Vector3()
+const desiredPos = new THREE.Vector3()
+const worldUp = new THREE.Vector3(0, 1, 0)
 
 const CAM_BEHIND = 0.42
 const CAM_ABOVE = 0.55
@@ -19,7 +18,7 @@ const LOOK_AHEAD_SPEED = 4
 export function FpvCamera() {
   const { camera } = useThree()
   const shake = useGameStore((s) => s.shake)
-  const desiredPos = useRef(new THREE.Vector3())
+  const smoothedPos = useRef(new THREE.Vector3())
 
   useFrame(() => {
     const drone = useGameStore.getState().drone
@@ -27,7 +26,7 @@ export function FpvCamera() {
 
     camera.near = 0.05
 
-    getDroneQuaternion(drone, droneQuat)
+    droneForwardVector(drone.yaw, forward)
 
     const horizSpeed = Math.hypot(drone.velocity.x, drone.velocity.z)
     const speedT = Math.min(horizSpeed / DRONE_MAX_SPEED, 1)
@@ -36,15 +35,20 @@ export function FpvCamera() {
     const shakeX = shake > 0.5 ? (Math.random() - 0.5) * shake * 0.06 : 0
     const shakeY = shake > 0.5 ? (Math.random() - 0.5) * shake * 0.06 : 0
 
-    camOffset.set(shakeX, CAM_ABOVE + shakeY, CAM_BEHIND).applyQuaternion(droneQuat)
+    desiredPos
+      .copy(drone.position)
+      .addScaledVector(forward, -CAM_BEHIND)
+      .add(new THREE.Vector3(shakeX, CAM_ABOVE + shakeY, 0))
 
-    desiredPos.current.copy(drone.position).add(camOffset)
-    camera.position.lerp(desiredPos.current, 0.72)
+    smoothedPos.current.lerp(desiredPos, 0.72)
+    camera.position.copy(smoothedPos.current)
 
-    noseDir.set(0, 0, -1).applyQuaternion(droneQuat)
-    lookTarget.copy(drone.position).addScaledVector(noseDir, lookAhead)
-    up.set(0, 1, 0).applyQuaternion(droneQuat)
-    camera.up.copy(up)
+    lookTarget
+      .copy(drone.position)
+      .addScaledVector(forward, lookAhead)
+      .add(new THREE.Vector3(0, 0.04, 0))
+
+    camera.up.copy(worldUp)
     camera.lookAt(lookTarget)
   })
 
