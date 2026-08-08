@@ -14,6 +14,8 @@ export const MUNITION_FALL_RATE = 0.018
 export const MUNITION_FALL_RATE_BIG = 0.013
 export const DRONE_ACC = 0.4
 export const DRONE_FRICTION = 0.92
+/** Per-frame damping of sideways slip so thrust stays along the nose */
+export const DRONE_LATERAL_DAMP = 0.82
 export const DRONE_YAW_SPEED = 0.045
 export const LANE_HALF = 25
 export const MIN_ALTITUDE = 1.5

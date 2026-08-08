@@ -2,6 +2,7 @@ import { DIFFICULTIES } from '@/constants/difficulty'
 import {
   DRONE_BATTERY_DRAIN,
   DRONE_FRICTION,
+  DRONE_LATERAL_DAMP,
   DRONE_MAX_SPEED,
   DRONE_THRUST,
   DRONE_YAW_ACCEL,
@@ -15,10 +16,32 @@ import { clamp } from '@/utils/math'
 import * as THREE from 'three'
 
 const forwardDir = new THREE.Vector3()
+const rightDir = new THREE.Vector3()
 
 export function droneForwardVector(yaw: number, out = forwardDir) {
   out.set(Math.sin(yaw), 0, -Math.cos(yaw))
   return out
+}
+
+export function droneRightVector(yaw: number, out = rightDir) {
+  out.set(Math.cos(yaw), 0, Math.sin(yaw))
+  return out
+}
+
+function decomposeHorizVelocity(drone: Drone, yaw: number) {
+  const fwd = droneForwardVector(yaw)
+  const right = droneRightVector(yaw)
+  return {
+    forwardSpeed: drone.velocity.x * fwd.x + drone.velocity.z * fwd.z,
+    lateralSpeed: drone.velocity.x * right.x + drone.velocity.z * right.z,
+  }
+}
+
+function setHorizVelocity(drone: Drone, yaw: number, forwardSpeed: number, lateralSpeed: number) {
+  const fwd = droneForwardVector(yaw)
+  const right = droneRightVector(yaw)
+  drone.velocity.x = fwd.x * forwardSpeed + right.x * lateralSpeed
+  drone.velocity.z = fwd.z * forwardSpeed + right.z * lateralSpeed
 }
 
 export function updateDrone({
@@ -40,8 +63,8 @@ export function updateDrone({
 }) {
   if (drone.grounded > 0) {
     drone.grounded--
-    drone.velocity.x *= 0.9
-    drone.velocity.z *= 0.9
+    const { forwardSpeed, lateralSpeed } = decomposeHorizVelocity(drone, drone.yaw)
+    setHorizVelocity(drone, drone.yaw, forwardSpeed * 0.9, lateralSpeed * 0.35)
     drone.yawVel *= 0.85
     drone.position.x += drone.velocity.x
     drone.position.z += drone.velocity.z
@@ -82,16 +105,20 @@ export function updateDrone({
     drone.velocity.z += (Math.random() - 0.5) * 0.06
   }
 
-  drone.velocity.x *= DRONE_FRICTION
+  let { forwardSpeed, lateralSpeed } = decomposeHorizVelocity(drone, drone.yaw)
+  lateralSpeed *= 1 - DRONE_LATERAL_DAMP
+  forwardSpeed *= DRONE_FRICTION
+  lateralSpeed *= DRONE_FRICTION
   drone.velocity.y *= 0.94
-  drone.velocity.z *= DRONE_FRICTION
 
-  const cappedHoriz = Math.hypot(drone.velocity.x, drone.velocity.z)
+  const cappedHoriz = Math.hypot(forwardSpeed, lateralSpeed)
   if (cappedHoriz > DRONE_MAX_SPEED) {
     const scale = DRONE_MAX_SPEED / cappedHoriz
-    drone.velocity.x *= scale
-    drone.velocity.z *= scale
+    forwardSpeed *= scale
+    lateralSpeed *= scale
   }
+
+  setHorizVelocity(drone, drone.yaw, forwardSpeed, lateralSpeed)
 
   drone.position.x += drone.velocity.x
   drone.position.y += drone.velocity.y
@@ -133,8 +160,19 @@ export function computeWind({
   return { wind, windPhase: nextPhase }
 }
 
-export function getDroneRotation(drone: Drone) {
-  const pitch = clamp(-drone.velocity.y * 0.12, -0.3, 0.3)
-  const bank = clamp(-drone.yawVel * 14, -0.4, 0.4)
-  return new THREE.Euler(pitch, drone.yaw, bank)
+export function getDroneAttitude(drone: Drone) {
+  const fwd = droneForwardVector(drone.yaw)
+  const forwardSpeed = drone.velocity.x * fwd.x + drone.velocity.z * fwd.z
+  const pitch = clamp(-drone.velocity.y * 0.08 + forwardSpeed * 0.05, -0.25, 0.25)
+  const bank = clamp(drone.yawVel * 12, -0.35, 0.35)
+  return { pitch, bank }
+}
+
+const droneEuler = new THREE.Euler()
+const droneQuat = new THREE.Quaternion()
+
+export function getDroneQuaternion(drone: Drone, out = droneQuat) {
+  const { pitch, bank } = getDroneAttitude(drone)
+  droneEuler.set(pitch, drone.yaw, bank, 'YXZ')
+  return out.setFromEuler(droneEuler)
 }

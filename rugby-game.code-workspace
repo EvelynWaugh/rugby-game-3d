@@ -7,5 +7,7 @@
 			"path": "../rugby-game"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "rugby-game-3d"
+	}
 }
