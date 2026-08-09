@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Group } from 'three'
-import { StaticModel } from '@/components/models/static-model'
+import { DroneModel } from '@/components/drone/drone-model'
 import { DRONE_MODEL } from '@/constants/models'
 import { useGameStore } from '@/stores/use-game-store'
 
@@ -24,7 +24,7 @@ export function Drone() {
 
   const visualYaw = useRef(0)
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     const drone = useGameStore.getState().drone
     if (!drone || !bodyRef.current || !orientationRef.current) return
 
@@ -42,14 +42,7 @@ export function Drone() {
   return (
     <group ref={bodyRef}>
       <group ref={orientationRef}>
-        <StaticModel
-          path={DRONE_MODEL.path}
-          targetSize={DRONE_MODEL.targetSize}
-          position={DRONE_MODEL.offset}
-          rotation={DRONE_MODEL.rotation}
-          scale={DRONE_MODEL.scale}
-          fallback={<PlaceholderDrone />}
-        />
+        <DroneModel fallback={<PlaceholderDrone />} />
       </group>
     </group>
   )

@@ -10,6 +10,9 @@ export const DRONE_YAW_DAMPING = 0.9
 export const DRONE_YAW_MAX = 0.038
 export const DRONE_BATTERY_DRAIN = 0.028
 export const DRONE_MAX_SPEED = 1.15
+/** Propeller spin (rad/s) — idle hover vs full cruise */
+export const DRONE_PROPELLER_SPIN_HOVER = 28
+export const DRONE_PROPELLER_SPIN_CRUISE = 72
 export const MUNITION_FALL_RATE = 0.018
 export const MUNITION_FALL_RATE_BIG = 0.013
 export const DRONE_ACC = 0.4

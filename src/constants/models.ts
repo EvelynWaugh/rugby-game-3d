@@ -13,7 +13,7 @@ export interface PigClipConfig {
   loop: boolean
 }
 
-export const PIG_TARGET_HEIGHT = 0.72
+export const PIG_TARGET_HEIGHT = 0.05
 
 export const PIG_MODEL = {
   path: '/models/pig/pig.glb',
@@ -23,12 +23,12 @@ export const PIG_MODEL = {
 /** Clip names inside pig.glb (verified via gltf-transform inspect) */
 export const PIG_CLIPS = {
   walk: { clip: 'Walking', loop: true },
-  walkGun: { clip: 'Walk_Left_with_Gun', loop: true },
+  walkGun: { clip: 'Walking', loop: true },
   run: { clip: 'Running', loop: true },
-  aim: { clip: 'Archery_Aim_with_Lateral_Scan', loop: true },
-  shoot: { clip: 'Archery_Shot_2', loop: false },
-  deathAbdominal: { clip: 'Fall_Dead_from_Abdominal_Injury', loop: false },
-  deathShot: { clip: 'Shot_in_the_Back_and_Fall', loop: false },
+  aim: { clip: 'Walking', loop: true },
+  shoot: { clip: 'Walking', loop: true },
+  deathAbdominal: { clip: 'Dead', loop: false },
+  deathShot: { clip: 'Dead', loop: false },
 } as const satisfies Record<string, PigClipConfig>
 
 export type PigAnimKey = keyof typeof PIG_CLIPS
@@ -48,6 +48,9 @@ export const DRONE_MODEL: ModelFitConfig = {
   /** Nudge toward chase cam so rear fuselage + rugby rack stay in the lower FOV */
   offset: [0, 0.04, -0.12],
 }
+
+/** Propeller mesh name pattern — GLTFLoader strips dots (mesh_11.001 → mesh_11001) */
+export const DRONE_PROPELLER_NODE_PATTERN = /^mesh_(?:0|1|11|11001)$/
 
 export const BALL_MODEL: ModelFitConfig = {
   path: '/models/ball/ball.glb',

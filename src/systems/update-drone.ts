@@ -72,7 +72,6 @@ export function updateDrone({
   }
 
   const horizSpeed = Math.hypot(drone.velocity.x, drone.velocity.z)
-  const motorsActive = input.forward !== 0 || input.altitude !== 0 || input.yaw !== 0
 
   if (input.yaw !== 0) {
     drone.yawVel += input.yaw * DRONE_YAW_ACCEL
@@ -130,10 +129,9 @@ export function updateDrone({
 
   drone.altitude = drone.position.y
 
-  if (motorsActive) {
-    const drain = DRONE_BATTERY_DRAIN * DIFFICULTIES[difficulty].battery
-    drone.hp -= drain * (1 + horizSpeed * 0.35)
-  }
+  // Motors stay on while airborne — drain on hover and extra while moving
+  const drain = DRONE_BATTERY_DRAIN * DIFFICULTIES[difficulty].battery
+  drone.hp -= drain * (0.85 + horizSpeed * 0.35 + Math.abs(drone.velocity.y) * 0.1)
 
   if (drone.hit > 0) drone.hit--
 }

@@ -1,5 +1,6 @@
-import { Suspense, useLayoutEffect, useMemo } from 'react'
+import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
+import type { Group } from 'three'
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
@@ -20,6 +21,7 @@ function PigAnimatedModelInner({
   speed = 1,
   rotation = [0, 0, 0],
 }: Omit<PigAnimatedModelProps, 'fallback'>) {
+  const groupRef = useRef<Group>(null)
   const { scene, animations } = useGLTF(PIG_MODEL.path)
 
   const { clone, fit } = useMemo(() => {
@@ -32,14 +34,14 @@ function PigAnimatedModelInner({
     }
   }, [scene])
 
-  // Bind mixer to the cloned skinned root — required for SkeletonUtils clones
-  const { actions, names } = useAnimations(animations, clone)
+  const { actions, names } = useAnimations(animations, groupRef)
+  console.log(actions, names)
   const { clip, loop } = PIG_CLIPS[animKey]
 
   useLayoutEffect(() => {
     if (!actions || names.length === 0) return
 
-    const action = actions[clip] ?? actions[names[0]]
+    const action = actions[clip] ?? actions.Walking ?? actions.Running
     if (!action) return
 
     Object.values(actions).forEach((a) => {
@@ -52,11 +54,11 @@ function PigAnimatedModelInner({
     action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)
     action.clampWhenFinished = !loop
     action.play()
-  }, [actions, names, animKey, clip, loop, speed, clone])
+  }, [actions, names, animKey, clip, loop, speed])
 
   return (
     <group scale={fit.scale} rotation={rotation}>
-      <primitive object={clone} position={fit.position} />
+      <primitive ref={groupRef}  object={clone} position={fit.position} />
     </group>
   )
 }
