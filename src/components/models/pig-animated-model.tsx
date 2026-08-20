@@ -1,6 +1,6 @@
 import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
-import type { Group } from 'three'
+import type { Object3D } from 'three'
 import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
@@ -21,7 +21,8 @@ function PigAnimatedModelInner({
   speed = 1,
   rotation = [0, 0, 0],
 }: Omit<PigAnimatedModelProps, 'fallback'>) {
-  const groupRef = useRef<Group>(null)
+  const cloneRef = useRef<Object3D>(null)
+  const activeRef = useRef<THREE.AnimationAction | null>(null)
   const { scene, animations } = useGLTF(PIG_MODEL.path)
 
   const { clone, fit } = useMemo(() => {
@@ -34,8 +35,7 @@ function PigAnimatedModelInner({
     }
   }, [scene])
 
-  const { actions, names } = useAnimations(animations, groupRef)
-  console.log(actions, names)
+  const { actions, names } = useAnimations(animations, cloneRef)
   const { clip, loop } = PIG_CLIPS[animKey]
 
   useLayoutEffect(() => {
@@ -44,21 +44,32 @@ function PigAnimatedModelInner({
     const action = actions[clip] ?? actions.Walking ?? actions.Running
     if (!action) return
 
-    Object.values(actions).forEach((a) => {
-      if (a && a !== action) a.stop()
-    })
+    const prev = activeRef.current
+    if (prev && prev !== action) prev.fadeOut(0.18)
 
     action.reset()
-    action.setEffectiveTimeScale(speed)
     action.setEffectiveWeight(1)
     action.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1)
     action.clampWhenFinished = !loop
-    action.play()
+
+    if (speed === 0) {
+      action.setEffectiveTimeScale(1)
+      action.time = Math.min(0.28, action.getClip().duration * 0.35)
+      action.paused = true
+      action.fadeIn(prev ? 0.18 : 0).play()
+      action.paused = true
+    } else {
+      action.paused = false
+      action.setEffectiveTimeScale(speed)
+      action.fadeIn(prev ? 0.18 : 0).play()
+    }
+
+    activeRef.current = action
   }, [actions, names, animKey, clip, loop, speed])
 
   return (
     <group scale={fit.scale} rotation={rotation}>
-      <primitive ref={groupRef}  object={clone} position={fit.position} />
+      <primitive ref={cloneRef} object={clone} position={fit.position} />
     </group>
   )
 }

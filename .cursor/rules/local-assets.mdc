@@ -24,13 +24,13 @@ Legacy per-clip pig GLBs may still exist on disk but are **not used** — all cl
 
 ## Pig animations
 
-Clip names are mapped in `PIG_CLIPS` (`src/constants/models.ts`). Inspect clips:
+Clip names are mapped in `PIG_CLIPS` (`src/constants/models.ts`). Current `pig.glb` clips: `Walking`, `Running`, `Dead` (plus unused baselayer / `.001` duplicates). Inspect clips:
 
 ```bash
 npx @gltf-transform/cli inspect public/models/pig/pig.glb
 ```
 
-Use `PigAnimatedModel` with crossfade — `SkeletonUtils.clone` + `useAnimations(animations, cloneRef)` on the cloned Object3D.
+Walk/run are **in-place**. World travel is in `update-soldiers.ts`; face walk direction in `pig-soldier.tsx`. Use `PigAnimatedModel` with crossfade — `SkeletonUtils.clone` + `useAnimations(animations, cloneRef)` on the cloned Object3D. Fit with `updateMatrixWorld(true)` and `PIG_TARGET_HEIGHT` (~1.65m); the Armature is scaled 0.01.
 
 ## Drone model
 

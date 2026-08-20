@@ -1,10 +1,13 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
 import {
+  DRONE_ALTITUDE_THRUST,
   DRONE_BATTERY_DRAIN,
   DRONE_FRICTION,
   DRONE_LATERAL_DAMP,
   DRONE_MAX_SPEED,
+  DRONE_MAX_VERTICAL_SPEED,
   DRONE_THRUST,
+  DRONE_VERTICAL_FRICTION,
   DRONE_YAW_ACCEL,
   DRONE_YAW_DAMPING,
   DRONE_YAW_MAX,
@@ -80,7 +83,7 @@ export function updateDrone({
   drone.yawVel *= DRONE_YAW_DAMPING
   drone.yawVel = clamp(drone.yawVel, -DRONE_YAW_MAX, DRONE_YAW_MAX)
 
-  const turnScale = 0.25 + 0.75 * Math.min(horizSpeed / 0.45, 1)
+  const turnScale = 0.35 + 0.65 * Math.min(horizSpeed / DRONE_MAX_SPEED, 1)
   drone.yaw += drone.yawVel * turnScale
 
   const fwd = droneForwardVector(drone.yaw)
@@ -90,25 +93,25 @@ export function updateDrone({
     drone.velocity.z += fwd.z * input.forward * DRONE_THRUST
   }
 
-  if (input.altitude !== 0) {
-    drone.velocity.y += input.altitude * DRONE_THRUST * 0.7
-  }
+  if (input.altitude !== 0)
+    drone.velocity.y += input.altitude * DRONE_ALTITUDE_THRUST
 
   if (levelData.wind) {
-    drone.velocity.x += wind.x * 0.04
-    drone.velocity.z += wind.z * 0.02
+    drone.velocity.x += wind.x * 0.006
+    drone.velocity.z += wind.z * 0.003
   }
 
   if (ewActive && frame % 10 === 0) {
-    drone.velocity.x += (Math.random() - 0.5) * 0.06
-    drone.velocity.z += (Math.random() - 0.5) * 0.06
+    drone.velocity.x += (Math.random() - 0.5) * 0.012
+    drone.velocity.z += (Math.random() - 0.5) * 0.012
   }
 
   let { forwardSpeed, lateralSpeed } = decomposeHorizVelocity(drone, drone.yaw)
   lateralSpeed *= 1 - DRONE_LATERAL_DAMP
   forwardSpeed *= DRONE_FRICTION
   lateralSpeed *= DRONE_FRICTION
-  drone.velocity.y *= 0.94
+  drone.velocity.y *= DRONE_VERTICAL_FRICTION
+  drone.velocity.y = clamp(drone.velocity.y, -DRONE_MAX_VERTICAL_SPEED, DRONE_MAX_VERTICAL_SPEED)
 
   const cappedHoriz = Math.hypot(forwardSpeed, lateralSpeed)
   if (cappedHoriz > DRONE_MAX_SPEED) {

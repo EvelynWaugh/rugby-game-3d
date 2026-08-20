@@ -3,7 +3,7 @@ import { DIFFICULTIES } from '@/constants/difficulty'
 import { useKeyboardInput } from '@/hooks/use-keyboard-input'
 import { checkAmmoGameOver, checkWin } from '@/systems/check-win'
 import { tickSoldierDeathTimers } from '@/systems/soldier-death'
-import { checkExplosion, createPigSplatFx, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
+import { checkExplosion, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
 import { dropMunition, updateMunitions } from '@/systems/update-munitions'
 import { computeWind, updateDrone } from '@/systems/update-drone'
 import { updateSoldiers } from '@/systems/update-soldiers'
@@ -122,12 +122,22 @@ export function useGameLoop() {
     if (soldierResult.droneDamage) drone.hp -= soldierResult.droneDamage
     if (soldierResult.droneHit) drone.hit = soldierResult.droneHit
 
-    for (const killed of soldierResult.ramKills) {
-      const splat = createPigSplatFx(killed.position)
-      shake = Math.max(shake, splat.shake)
-      particles.push(...splat.particles)
-      smoke.push(...splat.smoke)
-      pigParts.push(...splat.pigParts)
+    if (soldierResult.ramKills.length > 0) {
+      const origin = soldierResult.ramKills[0].position
+      const fx = checkExplosion({
+        x: origin.x,
+        z: origin.z,
+        soldiers,
+        shelters,
+        enemyDrones,
+        ewTowers,
+        forceBig: true,
+      })
+      score += fx.scoreDelta
+      shake = Math.max(shake, fx.shake)
+      particles.push(...fx.particles)
+      smoke.push(...fx.smoke)
+      pigParts.push(...fx.pigParts)
     }
 
     const droneResult = updateEnemyDrones({

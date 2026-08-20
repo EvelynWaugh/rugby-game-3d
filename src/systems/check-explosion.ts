@@ -28,6 +28,7 @@ export function checkExplosion({
   shelters,
   enemyDrones,
   ewTowers,
+  forceBig = false,
 }: {
   x: number
   z: number
@@ -35,6 +36,7 @@ export function checkExplosion({
   shelters: Shelter[]
   enemyDrones: EnemyDrone[]
   ewTowers: EwTower[]
+  forceBig?: boolean
 }): ExplosionResult {
   const scoreDelta = applyExplosionDamage({
     x,
@@ -45,7 +47,7 @@ export function checkExplosion({
     ewTowers,
   })
 
-  let big = scoreDelta > 0
+  let big = forceBig || scoreDelta > 0
   const pigSplatPositions: Vec3[] = []
   for (const s of soldiers) {
     if (s.dead && s.deathTimer > 130 && s.pig) {

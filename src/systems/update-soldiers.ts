@@ -1,7 +1,15 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
+import {
+  PIG_RUN_SPEED,
+  PIG_TURN_CHANCE,
+  PIG_WALK_SPEED,
+  RAM_DAMAGE,
+  RAM_RADIUS,
+  SCORE,
+  SOLDIER_SHOOT_RANGE_SQ,
+} from '@/constants/game'
 import { PIG_SHOOT_FRAMES } from '@/constants/models'
 import { markSoldierDead } from '@/systems/soldier-death'
-import { RAM_DAMAGE, RAM_RADIUS, RAM_RADIUS_3D, SCORE, SOLDIER_SHOOT_RANGE_SQ } from '@/constants/game'
 import type { Bullet, Drone, Munition, Soldier } from '@/types/game'
 import { dist3, distXZ, rand, uid } from '@/utils/math'
 
@@ -9,10 +17,41 @@ const LEASH_RADIUS = 14
 const DRONE_SPOT_RANGE = 22
 const FLEE_RANGE = 14
 
+function setHorizSpeed(s: Soldier, speed: number, dirX?: number, dirZ?: number) {
+  let x = dirX ?? s.velocity.x
+  let z = dirZ ?? s.velocity.z
+  const mag = Math.hypot(x, z)
+  if (mag < 0.0001) {
+    const angle = Math.random() * Math.PI * 2
+    x = Math.sin(angle)
+    z = Math.cos(angle)
+  } else {
+    x /= mag
+    z /= mag
+  }
+  s.velocity.x = x * speed
+  s.velocity.z = z * speed
+}
+
+function steerPatrol(s: Soldier, speed: number) {
+  const dx = s.spawnPosition.x - s.position.x
+  const dz = s.spawnPosition.z - s.position.z
+  const dist = Math.hypot(dx, dz)
+  if (dist > LEASH_RADIUS * 0.72) {
+    setHorizSpeed(s, speed, dx, dz)
+    return
+  }
+  if (Math.random() < PIG_TURN_CHANCE) {
+    const angle = Math.random() * Math.PI * 2
+    setHorizSpeed(s, speed, Math.sin(angle), Math.cos(angle))
+    return
+  }
+  setHorizSpeed(s, speed)
+}
+
 function leashToSpawn(s: Soldier) {
-  const anchor = s.spawnPosition
-  const dx = s.position.x - anchor.x
-  const dz = s.position.z - anchor.z
+  const dx = s.position.x - s.spawnPosition.x
+  const dz = s.position.z - s.spawnPosition.z
   const dist = Math.hypot(dx, dz)
   if (dist <= LEASH_RADIUS) return
 
@@ -75,28 +114,24 @@ export function updateSoldiers({
       if (s.shootTimer <= 0 && s.behavior === 'shoot') s.behavior = 'biped'
     }
 
-    s.position.x += s.velocity.x * 0.1
-    s.position.z += s.velocity.z * 0.1
+    s.position.x += s.velocity.x
+    s.position.z += s.velocity.z
     leashToSpawn(s)
 
     const horiz = distXZ(drone.position, s.position)
     const close3d = dist3(drone.position, s.position)
-    if (s.pig && !s.immune && (horiz < RAM_RADIUS || close3d < RAM_RADIUS_3D)) {
-      markSoldierDead(s, 'abdominal')
+    if (s.pig && !s.immune && close3d < RAM_RADIUS) {
+      markSoldierDead(s, 'shot')
       ramKills.push(s)
       scoreDelta += SCORE.pigRam
-      droneDamage += RAM_DAMAGE
-      droneHit = 8
+      if (!droneHit) {
+        droneDamage += RAM_DAMAGE
+        droneHit = 8
+      }
       continue
     }
 
-    const erratic = s.pig ? 0.04 : 0.01
-    const spd = s.pig ? 0.9 : 0.6
-    if (s.behavior !== 'flee' && s.behavior !== 'shoot' && Math.random() < erratic) {
-      s.velocity.x = rand(-spd, spd)
-      s.velocity.z = rand(-spd, spd)
-    }
-
+    const spd = s.pig ? PIG_WALK_SPEED : PIG_WALK_SPEED * 0.7
     const dx = drone.position.x - s.position.x
     const dz = drone.position.z - s.position.z
     const rangeSq = dx * dx + dz * dz
@@ -107,24 +142,33 @@ export function updateSoldiers({
       let flee = false
       for (const m of munitions) {
         if (m.alt < 0.4 && distXZ(s.position, m.position) < 9) {
-          startFlee(s, s.position.x - m.position.x, s.position.z - m.position.z, 1.6)
+          startFlee(s, s.position.x - m.position.x, s.position.z - m.position.z, PIG_RUN_SPEED)
           flee = true
           break
         }
       }
 
       if (!flee && seesDrone && s.cowardly && horiz < FLEE_RANGE) {
-        startFlee(s, s.position.x - drone.position.x, s.position.z - drone.position.z, 1.2)
+        startFlee(s, s.position.x - drone.position.x, s.position.z - drone.position.z, PIG_RUN_SPEED)
         flee = true
       } else if (!flee && s.behavior === 'flee') {
         s.behavior = 'biped'
-      } else if (!flee && inShootRange && s.cool > 0) {
+      } else if (!flee && inShootRange && s.cool > 0 && s.cool <= 35) {
         s.behavior = 'aim'
-      } else if (!flee && s.behavior === 'aim' && !inShootRange) {
+      } else if (!flee && s.behavior === 'aim' && (s.cool > 35 || !inShootRange)) {
         s.behavior = 'biped'
       } else if (!flee && s.behavior !== 'aim') {
         s.behavior = 'biped'
       }
+    }
+
+    if (s.behavior === 'aim' || s.behavior === 'shoot') {
+      s.velocity.x = 0
+      s.velocity.z = 0
+    } else if (s.behavior === 'flee') {
+      setHorizSpeed(s, PIG_RUN_SPEED)
+    } else {
+      steerPatrol(s, spd)
     }
 
     s.cool--

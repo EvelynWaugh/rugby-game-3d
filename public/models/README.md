@@ -47,16 +47,16 @@ Do **not** add a second yaw flip in `models.ts` — visual yaw is negated in `dr
 
 ## Pig animations
 
-One GLB file contains every clip. `PigAnimatedModel` crossfades between them.
+One GLB file contains every clip. `Walking` / `Running` are **in-place** — `update-soldiers.ts` moves pigs in the world. `PigAnimatedModel` crossfades clips.
 
 | State | Clip in pig.glb |
 |-------|-----------------|
-| Walk (armed) | `Walk_Left_with_Gun` + AK model |
+| Walk (armed) | `Walking` + AK model |
 | Run / flee | `Running` (weapon hidden) |
-| Aim | `Archery_Aim_with_Lateral_Scan` |
-| Shoot | `Archery_Shot_2` |
-| Death (ram) | `Fall_Dead_from_Abdominal_Injury` |
-| Death (munition) | `Shot_in_the_Back_and_Fall` |
+| Aim / shoot | `Walking` paused (no aim/shoot clips in this file) |
+| Death (ram or munition) | `Dead` |
+
+Ignore `Armature|*|baselayer` (bind pose) and `*.001` duplicates.
 
 ## Tuning scale (other models)
 

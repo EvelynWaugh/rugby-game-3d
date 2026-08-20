@@ -1,4 +1,5 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
+import { PIG_WALK_SPEED } from '@/constants/game'
 import { getLevelPath, samplePath, spawnAlongPath } from '@/systems/path-system'
 import type { DifficultyKey, Drone, EnemyDrone, EwTower, LevelConfig, Shelter, Soldier } from '@/types/game'
 import { rand, uid } from '@/utils/math'
@@ -71,7 +72,7 @@ export function spawnEntitiesForLevel({
   const ewTowers: EwTower[] = []
 
   for (let i = 0; i < levelData.soldiers; i++) {
-    const spd = 0.9
+    const angle = rand(0, Math.PI * 2)
     const pos = spawnAlongPath({
       curve,
       pathT: randomPathT(i, levelData.soldiers + levelData.reds + levelData.shelters),
@@ -81,7 +82,7 @@ export function spawnEntitiesForLevel({
       id: uid('pig'),
       position: { ...pos },
       spawnPosition: { ...pos },
-      velocity: { x: rand(-spd, spd), y: 0, z: rand(-spd, spd) },
+      velocity: { x: Math.sin(angle) * PIG_WALK_SPEED, y: 0, z: Math.cos(angle) * PIG_WALK_SPEED },
       hp: 1,
       maxhp: 1,
       cool: rand(60, 180) * ds.enemyRate,
@@ -100,7 +101,8 @@ export function spawnEntitiesForLevel({
   }
 
   for (let i = 0; i < (levelData.reds || 0); i++) {
-    const spd = 0.55
+    const angle = rand(0, Math.PI * 2)
+    const walk = PIG_WALK_SPEED * 0.7
     const pos = spawnAlongPath({
       curve,
       pathT: randomPathT(i + levelData.soldiers, levelData.soldiers + levelData.reds + levelData.shelters),
@@ -110,7 +112,7 @@ export function spawnEntitiesForLevel({
       id: uid('red'),
       position: { ...pos },
       spawnPosition: { ...pos },
-      velocity: { x: rand(-spd, spd), y: 0, z: rand(-spd, spd) },
+      velocity: { x: Math.sin(angle) * walk, y: 0, z: Math.cos(angle) * walk },
       hp: 2,
       maxhp: 2,
       cool: rand(50, 150) * ds.enemyRate,

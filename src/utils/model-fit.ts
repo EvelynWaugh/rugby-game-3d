@@ -27,6 +27,8 @@ export interface SkinnedFitResult {
 
 /** Fit a skinned character GLB to a target height and ground feet at y=0 */
 export function fitSkinnedToHeight(object: THREE.Object3D, targetHeight: number): SkinnedFitResult {
+  object.updateMatrixWorld(true)
+
   const meshes: THREE.SkinnedMesh[] = []
   object.traverse((child) => {
     if ((child as THREE.SkinnedMesh).isSkinnedMesh) meshes.push(child as THREE.SkinnedMesh)

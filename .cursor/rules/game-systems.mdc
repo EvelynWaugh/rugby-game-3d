@@ -10,3 +10,11 @@ alwaysApply: false
 - Zustand store holds state; components only render
 - Port behavior from `rugby-game/rugby-game.html` when in doubt
 - Do not put combat or win logic inside R3F components
+
+## Drone feel
+
+Forward (W / ArrowUp) and altitude (R / F) must **ease**, not snap. Tune `DRONE_THRUST`, `DRONE_ALTITUDE_THRUST`, `DRONE_MAX_SPEED`, and `DRONE_MAX_VERTICAL_SPEED` in `src/constants/game.ts`. Vertical speed is capped separately — do not reuse the huge horizontal thrust on F/R.
+
+## FPV ram
+
+Pigs die from rugby explosions **and** from the drone touching them in 3D (`RAM_RADIUS`). Contact uses `dist3`, not horizontal flyover. A ram runs `checkExplosion` at the pig (same FX, splat, and splash as a munition) and still applies `RAM_DAMAGE` to the drone.

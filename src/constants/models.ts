@@ -13,14 +13,19 @@ export interface PigClipConfig {
   loop: boolean
 }
 
-export const PIG_TARGET_HEIGHT = 0.05
+/** World-space height in meters. pig.glb Armature is scaled 0.01 (cm); fit must use world bbox. */
+export const PIG_TARGET_HEIGHT = 1.65
 
 export const PIG_MODEL = {
   path: '/models/pig/pig.glb',
   targetHeight: PIG_TARGET_HEIGHT,
 } as const
 
-/** Clip names inside pig.glb (verified via gltf-transform inspect) */
+/**
+ * Clip names inside pig.glb (GLTFLoader).
+ * Locomotion clips are in-place — world travel is applied in update-soldiers.ts.
+ * Ignore `Armature|*|baselayer` (bind pose) and `*.001` duplicates.
+ */
 export const PIG_CLIPS = {
   walk: { clip: 'Walking', loop: true },
   walkGun: { clip: 'Walking', loop: true },
@@ -33,7 +38,8 @@ export const PIG_CLIPS = {
 
 export type PigAnimKey = keyof typeof PIG_CLIPS
 
-export const PIG_DEATH_FRAMES = 140
+/** Dead clip is ~2.96s — keep the corpse visible until it finishes */
+export const PIG_DEATH_FRAMES = 180
 export const PIG_SHOOT_FRAMES = 90
 
 /**
@@ -65,7 +71,7 @@ export const WEAPON_AK: ModelFitConfig & {
   path: '/models/weapon/ak/ak.glb',
   targetSize: 0.22,
   attach: {
-    position: [0.05, 0.38, 0.04],
+    position: [0.12, 0.82, 0.16],
     rotation: [0, Math.PI * 0.5, 0],
     scale: 1,
   },
