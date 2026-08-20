@@ -51,10 +51,11 @@ One GLB file contains every clip. `Walking` / `Running` are **in-place** — `up
 
 | State | Clip in pig.glb |
 |-------|-----------------|
-| Walk (armed) | `Walking` + AK model |
-| Run / flee | `Running` (weapon hidden) |
-| Aim / shoot | `Walking` paused (no aim/shoot clips in this file) |
-| Death (ram or munition) | `Dead` |
+| Walk | `Walking` |
+| Run / flee | `Running` |
+| Shoot | `Walk_Backward_While_Shooting` + AK on `RightHand` |
+| Catch | `Leap_Right_and_Catch` |
+| Death | `Dead` |
 
 Ignore `Armature|*|baselayer` (bind pose) and `*.001` duplicates.
 

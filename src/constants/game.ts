@@ -1,8 +1,10 @@
 export const EXPLOSION_RADIUS = 8
 export const EXPLOSION_RADIUS_RED = 11
 export const RAM_DAMAGE = 3
-/** 3D FPV contact radius — drone ~0.42 + pig torso. Do not use a large XZ flyover radius. */
-export const RAM_RADIUS = 1.85
+/** Horizontal reach for FPV body contact (pig torso + drone). */
+export const RAM_HORIZ = 1.7
+/** Drone can hit from slightly above the pig's head. */
+export const RAM_ALT_MARGIN = 0.75
 export const DRONE_THRUST = 0.014
 export const DRONE_ALTITUDE_THRUST = 0.008
 export const DRONE_TURN_SPEED = 0.032
@@ -29,7 +31,10 @@ export const MIN_ALTITUDE = 0.5
 export const MAX_ALTITUDE = 40
 export const PIG_WALK_SPEED = 0.032
 export const PIG_RUN_SPEED = 0.068
+export const PIG_CATCH_SPEED = 0.09
 export const PIG_TURN_CHANCE = 0.01
+export const CATCH_RANGE = 6.5
+export const CATCH_ALTITUDE = 4.2
 export const BULLET_HIT_RADIUS = 2
 export const SOLDIER_SHOOT_RANGE = 32
 export const SOLDIER_SHOOT_RANGE_SQ = SOLDIER_SHOOT_RANGE * SOLDIER_SHOOT_RANGE

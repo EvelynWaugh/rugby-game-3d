@@ -59,7 +59,7 @@ export interface Drone {
   grounded: number
 }
 
-export type PigBehavior = 'biped' | 'flee' | 'aim' | 'shoot'
+export type PigBehavior = 'biped' | 'flee' | 'aim' | 'shoot' | 'catch'
 export type DeathVariant = 'abdominal' | 'shot'
 
 export interface Soldier {
@@ -76,8 +76,10 @@ export interface Soldier {
   visible: boolean
   behavior: PigBehavior
   cowardly: boolean
+  catcher: boolean
   weaponDropped: boolean
   shootTimer: number
+  catchTimer: number
   jamOff: number
   deathTimer: number
   deathVariant: DeathVariant

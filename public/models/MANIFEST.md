@@ -13,9 +13,10 @@ GLB binaries are gitignored (too large) but **must exist locally** for the game 
 
 | Clip name | Game state |
 |-----------|------------|
-| `Walking` | Armed patrol (in-place clip; world move in `update-soldiers.ts`) |
-| `Running` | Flee |
-| `Walking` paused | Aim / shoot (no dedicated clips) |
+| `Walking` | Armed patrol |
+| `Running` | Cowardly pigs flee |
+| `Walk_Backward_While_Shooting` | Shooting (AK on RightHand) |
+| `Leap_Right_and_Catch` | Catcher pigs leap at a nearby low drone |
 | `Dead` | Ram or munition death |
 
 Ignore `Armature|*|baselayer` (T-pose) and `*.001` duplicates. Registry: `src/constants/models.ts` (`PIG_MODEL`, `PIG_CLIPS`)

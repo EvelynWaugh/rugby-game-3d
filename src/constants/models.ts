@@ -24,14 +24,14 @@ export const PIG_MODEL = {
 /**
  * Clip names inside pig.glb (GLTFLoader).
  * Locomotion clips are in-place — world travel is applied in update-soldiers.ts.
- * Ignore `Armature|*|baselayer` (bind pose) and `*.001` duplicates.
  */
 export const PIG_CLIPS = {
   walk: { clip: 'Walking', loop: true },
   walkGun: { clip: 'Walking', loop: true },
   run: { clip: 'Running', loop: true },
-  aim: { clip: 'Walking', loop: true },
-  shoot: { clip: 'Walking', loop: true },
+  aim: { clip: 'Walk_Backward_While_Shooting', loop: true },
+  shoot: { clip: 'Walk_Backward_While_Shooting', loop: true },
+  catch: { clip: 'Leap_Right_and_Catch', loop: false },
   deathAbdominal: { clip: 'Dead', loop: false },
   deathShot: { clip: 'Dead', loop: false },
 } as const satisfies Record<string, PigClipConfig>
@@ -40,7 +40,8 @@ export type PigAnimKey = keyof typeof PIG_CLIPS
 
 /** Dead clip is ~2.96s — keep the corpse visible until it finishes */
 export const PIG_DEATH_FRAMES = 180
-export const PIG_SHOOT_FRAMES = 90
+export const PIG_SHOOT_FRAMES = 114
+export const PIG_CATCH_FRAMES = 162
 
 /**
  * Blender glTF: forward −Y, up +Z. Ry(π) aligns authored nose with game forward (−Z) after Y-up remap.
@@ -69,10 +70,10 @@ export const WEAPON_AK: ModelFitConfig & {
   attach: { position: [number, number, number]; rotation: [number, number, number]; scale: number }
 } = {
   path: '/models/weapon/ak/ak.glb',
-  targetSize: 0.22,
+  targetSize: 0.48,
   attach: {
-    position: [0.12, 0.82, 0.16],
-    rotation: [0, Math.PI * 0.5, 0],
+    position: [0.02, 0.1, 0.05],
+    rotation: [Math.PI * 0.5, Math.PI, 0],
     scale: 1,
   },
 }

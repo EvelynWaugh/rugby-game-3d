@@ -24,7 +24,7 @@ Legacy per-clip pig GLBs may still exist on disk but are **not used** — all cl
 
 ## Pig animations
 
-Clip names are mapped in `PIG_CLIPS` (`src/constants/models.ts`). Current `pig.glb` clips: `Walking`, `Running`, `Dead` (plus unused baselayer / `.001` duplicates). Inspect clips:
+Clip names are mapped in `PIG_CLIPS` (`src/constants/models.ts`). Current `pig.glb` clips: `Walking`, `Running`, `Walk_Backward_While_Shooting`, `Leap_Right_and_Catch`, `Dead`. Inspect clips:
 
 ```bash
 npx @gltf-transform/cli inspect public/models/pig/pig.glb

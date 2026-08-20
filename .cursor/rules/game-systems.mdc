@@ -17,4 +17,4 @@ Forward (W / ArrowUp) and altitude (R / F) must **ease**, not snap. Tune `DRONE_
 
 ## FPV ram
 
-Pigs die from rugby explosions **and** from the drone touching them in 3D (`RAM_RADIUS`). Contact uses `dist3`, not horizontal flyover. A ram runs `checkExplosion` at the pig (same FX, splat, and splash as a munition) and still applies `RAM_DAMAGE` to the drone.
+Pigs (including red-tinted pig meshes) die from rugby explosions **and** from the drone hitting their body (`RAM_HORIZ` + altitude overlap). A ram runs `checkExplosion` at the pig and applies `RAM_DAMAGE` to the drone. Do not require `soldier.pig === true` — level 1 reds use the same model.

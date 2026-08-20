@@ -8,57 +8,44 @@ alwaysApply: false
 
 All pig clips live in **`public/models/pig/pig.glb`**. Registry: `PIG_MODEL` + `PIG_CLIPS` in `src/constants/models.ts`.
 
-The GLB Armature is **cm-scaled (0.01)**. `fitSkinnedToHeight` must call `updateMatrixWorld(true)` and use `PIG_TARGET_HEIGHT` (~1.65m). Do not set height to a few centimeters as a workaround.
+The GLB Armature is **cm-scaled (0.01)**. `fitSkinnedToHeight` must call `updateMatrixWorld(true)` and use `PIG_TARGET_HEIGHT` (~1.65m).
 
 ## Clip names (inside pig.glb)
-
-GLTFLoader names (use these). Ignore `Armature|*|baselayer` (bind/T-pose) and `*.001` duplicates.
 
 | Key | Clip name | Loop |
 |-----|-----------|------|
 | walk / walkGun | Walking | yes |
 | run | Running | yes |
-| aim / shoot | Walking (paused) | yes |
+| aim / shoot | Walk_Backward_While_Shooting | yes |
+| catch | Leap_Right_and_Catch | no |
 | deathAbdominal / deathShot | Dead | no |
-
-There is **no idle / aim / shoot clip** in the current file. Aim and shoot freeze a walk pose (`speed={0}`).
 
 ## In-place clips + world locomotion
 
-`Walking` / `Running` do **not** travel (hips sway in place). Pigs move because `update-soldiers.ts` writes `soldier.position` each frame.
+Walk / run / shoot clips do **not** travel. `update-soldiers.ts` writes `soldier.position`.
 
-- Patrol (`biped`): keep `PIG_WALK_SPEED`, face **velocity** (`atan2(vx, vz)` — Mixamo +Z forward).
-- Flee: `PIG_RUN_SPEED`, face velocity, drop weapon.
-- Aim / shoot: velocity 0, face the drone, pause walk clip. Aim only during a short windup (`cool <= 35`); otherwise patrol.
-- Never multiply velocity by `0.1` (that leftover made them treadmill in place).
+- Patrol (`biped`): `PIG_WALK_SPEED`, face velocity.
+- Flee (`cowardly`): `Running`, `PIG_RUN_SPEED`, drop weapon.
+- Catch (`catcher`): `Leap_Right_and_Catch` when the drone is close and low (`CATCH_RANGE` / `CATCH_ALTITUDE`).
+- Shoot: `Walk_Backward_While_Shooting`, back away from the drone, **AK parented to `RightHand`**.
+- Dead: `Dead`.
 
 ## Component pattern
 
-- Use `PigAnimatedModel` — one `useGLTF` load, `SkeletonUtils.clone`, `useAnimations(animations, cloneRef)` on the **cloned mesh ref**.
-- Crossfade with `fadeIn` / `fadeOut` when switching clips; do **not** remount the model per state.
-- AK weapon is a separate `WeaponAk` attach — hidden during aim/shoot/run and when `weaponDropped`.
+- `PigAnimatedModel` — `SkeletonUtils.clone`, `useAnimations` on the cloned mesh ref, crossfade clips.
+- AK is a `WeaponAk` that follows the `RightHand` bone (world → pig-local). Visible only while aiming/shooting.
 
-## Behavior → animation
+## FPV ram
 
-| `Soldier.behavior` | Clip | Notes |
-|--------------------|------|-------|
-| biped | walkGun | patrol, actually translates |
-| aim | Walking paused | drone in range, on cooldown |
-| shoot | Walking paused | fires bullet, `shootTimer` counts down |
-| flee | run | cowardly pigs or incoming munition; drops weapon |
-| dead | Dead | ram and munition both use `deathShot` (same explosion death) |
+Contact is a **body capsule**, not distance-to-feet:
 
-## FPV ram (drone contact)
+- Horizontal: `RAM_HORIZ` (~1.7)
+- Vertical: drone Y between ground and `PIG_TARGET_HEIGHT + RAM_ALT_MARGIN`
 
-Touching a pig is a kamikaze blast: same death as a rugby explosion **plus** `checkExplosion` at the impact.
+Ram kills **every** pig-mesh soldier (including red-tinted ones). Level 1 spawns reds that use the same GLB — do not require `s.pig === true`. Then `checkExplosion` at the impact.
 
-- 3D contact only (`dist3 < RAM_RADIUS`, ~1.85). Do not use a large XZ flyover radius.
-- Death variant is `shot` (same clip/splat as munitions). Then run `checkExplosion` with `forceBig` so fire, smoke, and pig splat spawn.
-- Splash can kill nearby pigs / reds / drones in the blast. Direct ram still costs the drone `RAM_DAMAGE`.
-- `MIN_ALTITUDE` stays low enough (~0.5) that the drone can dive into torso height.
+## AI roles (`setup-level.ts`)
 
-## AI (update-soldiers.ts)
-
-- `cowardly` pigs (~45%) flee when drone within 14m and spot range 22m.
-- Non-cowardly pigs aim/shoot instead of fleeing.
-- Fleeing always sets `weaponDropped = true`.
+- ~40% `cowardly` — run away when the drone is within flee range.
+- ~half of the rest `catcher` — leap/catch when the drone flies near and low.
+- Remaining — shoot with AK.

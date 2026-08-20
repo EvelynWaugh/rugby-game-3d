@@ -78,6 +78,7 @@ export function spawnEntitiesForLevel({
       pathT: randomPathT(i, levelData.soldiers + levelData.reds + levelData.shelters),
       lateral: rand(-18, 18),
     })
+    const cowardly = Math.random() < 0.4
     soldiers.push({
       id: uid('pig'),
       position: { ...pos },
@@ -91,9 +92,11 @@ export function spawnEntitiesForLevel({
       immune: lvImmune,
       visible: true,
       behavior: 'biped',
-      cowardly: Math.random() < 0.45,
+      cowardly,
+      catcher: !cowardly && Math.random() < 0.5,
       weaponDropped: false,
       shootTimer: 0,
+      catchTimer: 0,
       jamOff: 0,
       deathTimer: 0,
       deathVariant: 'shot',
@@ -108,6 +111,7 @@ export function spawnEntitiesForLevel({
       pathT: randomPathT(i + levelData.soldiers, levelData.soldiers + levelData.reds + levelData.shelters),
       lateral: rand(-18, 18),
     })
+    const cowardly = Math.random() < 0.3
     soldiers.push({
       id: uid('red'),
       position: { ...pos },
@@ -121,9 +125,11 @@ export function spawnEntitiesForLevel({
       immune: lvImmune,
       visible: true,
       behavior: 'biped',
-      cowardly: Math.random() < 0.3,
+      cowardly,
+      catcher: !cowardly && Math.random() < 0.45,
       weaponDropped: false,
       shootTimer: 0,
+      catchTimer: 0,
       jamOff: 0,
       deathTimer: 0,
       deathVariant: 'shot',

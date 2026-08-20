@@ -1,17 +1,21 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
 import {
+  CATCH_ALTITUDE,
+  CATCH_RANGE,
+  PIG_CATCH_SPEED,
   PIG_RUN_SPEED,
   PIG_TURN_CHANCE,
   PIG_WALK_SPEED,
+  RAM_ALT_MARGIN,
   RAM_DAMAGE,
-  RAM_RADIUS,
+  RAM_HORIZ,
   SCORE,
   SOLDIER_SHOOT_RANGE_SQ,
 } from '@/constants/game'
-import { PIG_SHOOT_FRAMES } from '@/constants/models'
+import { PIG_CATCH_FRAMES, PIG_SHOOT_FRAMES, PIG_TARGET_HEIGHT } from '@/constants/models'
 import { markSoldierDead } from '@/systems/soldier-death'
 import type { Bullet, Drone, Munition, Soldier } from '@/types/game'
-import { dist3, distXZ, rand, uid } from '@/utils/math'
+import { distXZ, rand, uid } from '@/utils/math'
 
 const LEASH_RADIUS = 14
 const DRONE_SPOT_RANGE = 22
@@ -67,7 +71,21 @@ function startFlee(s: Soldier, awayX: number, awayZ: number, speed: number) {
   s.velocity.x = (awayX / dd) * speed
   s.velocity.z = (awayZ / dd) * speed
   s.behavior = 'flee'
+  s.catchTimer = 0
   if (!s.weaponDropped) s.weaponDropped = true
+}
+
+function startCatch(s: Soldier, towardX: number, towardZ: number) {
+  s.behavior = 'catch'
+  s.catchTimer = PIG_CATCH_FRAMES
+  setHorizSpeed(s, PIG_CATCH_SPEED, towardX, towardZ)
+}
+
+function droneHitsBody(drone: Drone, s: Soldier) {
+  if (distXZ(drone.position, s.position) > RAM_HORIZ) return false
+  const top = s.position.y + PIG_TARGET_HEIGHT + RAM_ALT_MARGIN
+  const bot = s.position.y - 0.2
+  return drone.position.y <= top && drone.position.y >= bot
 }
 
 export interface SoldierUpdateResult {
@@ -114,16 +132,20 @@ export function updateSoldiers({
       if (s.shootTimer <= 0 && s.behavior === 'shoot') s.behavior = 'biped'
     }
 
+    if (s.catchTimer > 0) {
+      s.catchTimer--
+      if (s.catchTimer <= 0 && s.behavior === 'catch') s.behavior = 'biped'
+    }
+
     s.position.x += s.velocity.x
     s.position.z += s.velocity.z
     leashToSpawn(s)
 
     const horiz = distXZ(drone.position, s.position)
-    const close3d = dist3(drone.position, s.position)
-    if (s.pig && !s.immune && close3d < RAM_RADIUS) {
+    if (!s.immune && droneHitsBody(drone, s)) {
       markSoldierDead(s, 'shot')
       ramKills.push(s)
-      scoreDelta += SCORE.pigRam
+      scoreDelta += s.pig ? SCORE.pigRam : SCORE.redSoldier
       if (!droneHit) {
         droneDamage += RAM_DAMAGE
         droneHit = 8
@@ -137,8 +159,9 @@ export function updateSoldiers({
     const rangeSq = dx * dx + dz * dz
     const inShootRange = rangeSq < SOLDIER_SHOOT_RANGE_SQ
     const seesDrone = horiz < DRONE_SPOT_RANGE
+    const droneCatchable = horiz < CATCH_RANGE && drone.position.y < CATCH_ALTITUDE
 
-    if (s.pig && s.behavior !== 'shoot') {
+    if (s.behavior !== 'shoot') {
       let flee = false
       for (const m of munitions) {
         if (m.alt < 0.4 && distXZ(s.position, m.position) < 9) {
@@ -153,6 +176,10 @@ export function updateSoldiers({
         flee = true
       } else if (!flee && s.behavior === 'flee') {
         s.behavior = 'biped'
+      } else if (!flee && s.catcher && droneCatchable && s.behavior !== 'catch') {
+        startCatch(s, dx, dz)
+      } else if (!flee && s.behavior === 'catch') {
+        // hold leap until catchTimer expires
       } else if (!flee && inShootRange && s.cool > 0 && s.cool <= 35) {
         s.behavior = 'aim'
       } else if (!flee && s.behavior === 'aim' && (s.cool > 35 || !inShootRange)) {
@@ -162,9 +189,15 @@ export function updateSoldiers({
       }
     }
 
-    if (s.behavior === 'aim' || s.behavior === 'shoot') {
+    if (s.behavior === 'shoot') {
+      const dist = Math.sqrt(rangeSq) || 1
+      s.velocity.x = -(dx / dist) * PIG_WALK_SPEED * 0.65
+      s.velocity.z = -(dz / dist) * PIG_WALK_SPEED * 0.65
+    } else if (s.behavior === 'aim') {
       s.velocity.x = 0
       s.velocity.z = 0
+    } else if (s.behavior === 'catch') {
+      setHorizSpeed(s, PIG_CATCH_SPEED, dx, dz)
     } else if (s.behavior === 'flee') {
       setHorizSpeed(s, PIG_RUN_SPEED)
     } else {
@@ -172,7 +205,7 @@ export function updateSoldiers({
     }
 
     s.cool--
-    if (s.cool <= 0 && s.behavior !== 'flee') {
+    if (s.cool <= 0 && s.behavior !== 'flee' && s.behavior !== 'catch') {
       s.cool = rand(70, 160) * ds.enemyRate
       if (inShootRange) {
         s.behavior = 'shoot'
@@ -180,7 +213,7 @@ export function updateSoldiers({
         const dist = Math.sqrt(rangeSq) || 1
         bullets.push({
           id: uid('bullet'),
-          position: { ...s.position, y: s.position.y + 1 },
+          position: { ...s.position, y: s.position.y + 1.1 },
           velocity: { x: (dx / dist) * 0.4, y: 0, z: (dz / dist) * 0.4 },
           life: 120,
           enemy: true,

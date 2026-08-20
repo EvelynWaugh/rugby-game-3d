@@ -50,7 +50,7 @@ export function checkExplosion({
   let big = forceBig || scoreDelta > 0
   const pigSplatPositions: Vec3[] = []
   for (const s of soldiers) {
-    if (s.dead && s.deathTimer > 130 && s.pig) {
+    if (s.dead && s.deathTimer > 130) {
       pigSplatPositions.push({ ...s.position })
     }
   }

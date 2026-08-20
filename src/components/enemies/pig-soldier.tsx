@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import { PigAnimatedModel } from '@/components/models/pig-animated-model'
-import { WeaponAk } from '@/components/models/weapon-ak'
 import { type PigAnimKey } from '@/constants/models'
 import type { Soldier } from '@/types/game'
 import { useGameStore } from '@/stores/use-game-store'
@@ -17,22 +16,15 @@ function pickAnimKey(soldier: Soldier): PigAnimKey {
     return soldier.deathVariant === 'shot' ? 'deathShot' : 'deathAbdominal'
   }
   if (soldier.behavior === 'shoot') return 'shoot'
+  if (soldier.behavior === 'catch') return 'catch'
   if (soldier.behavior === 'flee') return 'run'
   if (soldier.behavior === 'aim') return 'aim'
   return 'walkGun'
 }
 
-function pickAnimSpeed(soldier: Soldier, animKey: PigAnimKey) {
-  if (soldier.dead) return 1
-  if (animKey === 'aim' || animKey === 'shoot') return 0
-  if (animKey === 'run') return 1.15
-  return 1
-}
-
 function showWeapon(soldier: Soldier, animKey: PigAnimKey) {
   if (soldier.dead || soldier.weaponDropped) return false
-  if (animKey === 'aim' || animKey === 'shoot' || animKey === 'run') return false
-  return true
+  return animKey === 'aim' || animKey === 'shoot'
 }
 
 function PlaceholderPig({ tint = '#f4a6b8' }: { tint?: string }) {
@@ -66,8 +58,13 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
       return
     }
 
+    const faceDrone =
+      soldier.behavior === 'aim' ||
+      soldier.behavior === 'shoot' ||
+      soldier.behavior === 'catch'
     const moveSpeed = Math.hypot(soldier.velocity.x, soldier.velocity.z)
-    if (soldier.behavior === 'aim' || soldier.behavior === 'shoot') {
+
+    if (faceDrone) {
       const drone = useGameStore.getState().drone
       if (drone) {
         const dx = drone.position.x - soldier.position.x
@@ -91,10 +88,9 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
     <group ref={groupRef}>
       <PigAnimatedModel
         animKey={animKey}
-        speed={pickAnimSpeed(soldier, animKey)}
+        showWeapon={showWeapon(soldier, animKey)}
         fallback={<PlaceholderPig tint={tint} />}
       />
-      {showWeapon(soldier, animKey) && <WeaponAk />}
     </group>
   )
 }
