@@ -9,7 +9,7 @@ import {
   DRONE_PROPELLER_SPIN_CRUISE,
   DRONE_PROPELLER_SPIN_HOVER,
 } from '@/constants/game'
-import { DRONE_MODEL, DRONE_PROPELLER_NODE_PATTERN } from '@/constants/models'
+import { DRONE_MODEL, isDronePropellerNode } from '@/constants/models'
 import { useGameStore } from '@/stores/use-game-store'
 import { enableShadows, fitObjectToSize } from '@/utils/model-fit'
 import { clamp } from '@/utils/math'
@@ -21,11 +21,23 @@ interface DroneModelProps {
 }
 
 function collectPropellerMeshes(root: THREE.Object3D): THREE.Mesh[] {
-  const meshes: THREE.Mesh[] = []
+  const named: THREE.Mesh[] = []
+  const offset: THREE.Mesh[] = []
+
   root.traverse((child) => {
-    if ((child as THREE.Mesh).isMesh && DRONE_PROPELLER_NODE_PATTERN.test(child.name))
-      meshes.push(child as THREE.Mesh)
+    if (!(child as THREE.Mesh).isMesh) return
+    const mesh = child as THREE.Mesh
+    const parentName = mesh.parent?.name ?? ''
+    if (isDronePropellerNode(mesh.name) || isDronePropellerNode(parentName)) {
+      named.push(mesh)
+      return
+    }
+    const origin =
+      Math.hypot(mesh.position.x, mesh.position.z) > 0.01 ? mesh.position : mesh.parent?.position
+    if (origin && Math.hypot(origin.x, origin.z) > 0.25) offset.push(mesh)
   })
+
+  const meshes = named.length >= 2 ? named : offset
   return meshes.sort((a, b) => a.name.localeCompare(b.name))
 }
 
@@ -87,7 +99,7 @@ function DroneModelInner() {
 
     for (let i = 0; i < propellerPivots.length; i++) {
       const sign = i % 2 === 0 ? 1 : -1
-      propellerPivots[i].rotation.y += delta * spinRate * sign
+      propellerPivots[i].rotateY(delta * spinRate * sign)
     }
   })
 

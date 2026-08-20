@@ -39,8 +39,7 @@ Walk/run are **in-place**. World travel is in `update-soldiers.ts`; face walk di
 - **Game:** Y-up, path on XZ, physics yaw on world Y, forward `droneForwardVector` (−Z at yaw 0).
 - **Loading:** `StaticModel` applies `DRONE_MODEL.rotation` + `targetSize` fit; `drone.tsx` sets `rotation.y = −drone.yaw` (smoothed).
 - **Camera:** `FpvCamera` tracks `droneForwardVector` — keep mesh/camera/physics in sync; do not reintroduce extra Euler flips on the GLB without testing.
-- **Preview:** `GameSceneExample` / `drone-example.tsx` loads the raw scene (Blender-style controls) — not identical to in-game orientation.
-- Details: `public/models/README.md`.
+- **Propellers:** four corner meshes (`Meshy_Meshy_Model_mesh_node*`). `isDronePropellerNode` in `models.ts`; `drone-model.tsx` spins them around local Y. Fallback: meshes offset from the body in XZ.
 
 ## Agent tooling
 

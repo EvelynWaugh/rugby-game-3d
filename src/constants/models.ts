@@ -56,8 +56,13 @@ export const DRONE_MODEL: ModelFitConfig = {
   offset: [0, 0.04, -0.12],
 }
 
-/** Propeller mesh name pattern — GLTFLoader strips dots (mesh_11.001 → mesh_11001) */
-export const DRONE_PROPELLER_NODE_PATTERN = /^mesh_(?:0|1|11|11001)$/
+/** Propeller nodes in drone.glb — Meshy quad props, plus legacy names (not Mesh_0, which is the body). */
+export function isDronePropellerNode(name: string) {
+  if (/meshy_meshy_model_mesh_node/i.test(name)) return true
+  if (/(?:^|_|-)(?:prop|rotor|blade)/i.test(name)) return true
+  if (/^mesh_(?:1|11|11001)$/.test(name)) return true
+  return false
+}
 
 export const BALL_MODEL: ModelFitConfig = {
   path: '/models/ball/ball.glb',
