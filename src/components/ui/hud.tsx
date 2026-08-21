@@ -29,6 +29,8 @@ export function Hud() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 p-4">
+      {drone.hit > 0 && <div className="absolute inset-0 bg-red-700/25" />}
+
       <img
         src="/assets/img/shevron_gold.svg"
         alt=""

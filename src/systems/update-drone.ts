@@ -2,6 +2,7 @@ import { DIFFICULTIES } from '@/constants/difficulty'
 import {
   DRONE_ALTITUDE_THRUST,
   DRONE_BATTERY_DRAIN,
+  DRONE_CRUISE_SPEED,
   DRONE_FRICTION,
   DRONE_LATERAL_DAMP,
   DRONE_MAX_SPEED,
@@ -110,6 +111,8 @@ export function updateDrone({
   lateralSpeed *= 1 - DRONE_LATERAL_DAMP
   forwardSpeed *= DRONE_FRICTION
   lateralSpeed *= DRONE_FRICTION
+  if (input.forward === 0)
+    forwardSpeed += (DRONE_CRUISE_SPEED - forwardSpeed) * 0.12
   drone.velocity.y *= DRONE_VERTICAL_FRICTION
   drone.velocity.y = clamp(drone.velocity.y, -DRONE_MAX_VERTICAL_SPEED, DRONE_MAX_VERTICAL_SPEED)
 

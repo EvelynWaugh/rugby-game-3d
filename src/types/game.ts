@@ -79,6 +79,7 @@ export interface Soldier {
   catcher: boolean
   weaponDropped: boolean
   shootTimer: number
+  fireCool: number
   catchTimer: number
   jamOff: number
   deathTimer: number

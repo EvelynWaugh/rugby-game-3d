@@ -5,17 +5,13 @@ import { FpvCamera } from '@/components/camera/fpv-camera'
 import { Drone } from '@/components/drone/drone'
 import { PlayableDrone } from '@/components/drone/drone-example'
 import { PigSoldier, RedSoldier } from '@/components/enemies/pig-soldier'
+import { Bullets } from '@/components/fx/bullets'
 import { Particles, PigSplatParts, SmokeClouds } from '@/components/fx/explosion'
 import { RugbyBall } from '@/components/munitions/rugby-ball'
 import { ShelterMesh } from '@/components/structures/shelter'
 import { Level1Outskirts } from '@/components/terrain/level-1-outskirts'
-import { ALL_MODEL_PATHS } from '@/constants/models'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { useGameStore } from '@/stores/use-game-store'
-
-for (const path of ALL_MODEL_PATHS) {
-  useGLTF.preload(path)
-}
 
 function SceneLights() {
   return (
@@ -38,6 +34,7 @@ function GameWorld() {
   const soldiers = useGameStore((s) => s.soldiers)
   const shelters = useGameStore((s) => s.shelters)
   const munitions = useGameStore((s) => s.munitions)
+  const bullets = useGameStore((s) => s.bullets)
   const particles = useGameStore((s) => s.particles)
   const smoke = useGameStore((s) => s.smoke)
   const pigParts = useGameStore((s) => s.pigParts)
@@ -71,6 +68,7 @@ function GameWorld() {
         <RugbyBall key={m.id} munition={m} />
       ))}
 
+      <Bullets bullets={bullets} />
       <Particles particles={particles} />
       <SmokeClouds smoke={smoke} />
       <PigSplatParts parts={pigParts} />

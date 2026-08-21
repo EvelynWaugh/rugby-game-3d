@@ -1,6 +1,7 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
-import { PIG_WALK_SPEED, RAT_WALK_SPEED } from '@/constants/game'
+import { DRONE_CRUISE_SPEED, PIG_WALK_SPEED, RAT_WALK_SPEED } from '@/constants/game'
 import { SHELTER_INTERIOR_RATIO, SHELTER_WORLD } from '@/constants/models'
+import { droneForwardVector } from '@/systems/update-drone'
 import { getLevelPath, samplePath, spawnAlongPath } from '@/systems/path-system'
 import type { DifficultyKey, Drone, EnemyDrone, EwTower, LevelConfig, Rat, Shelter, Soldier } from '@/types/game'
 import { rand, uid } from '@/utils/math'
@@ -10,10 +11,12 @@ export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, mu
   const maxhp = Math.round(100 * DIFFICULTIES[difficulty].battery)
   const pathT = 0.02
   const sample = samplePath({ curve, pathT, lateral: 0, altitude: 0 })
+  const yaw = Math.atan2(sample.tangent.x, -sample.tangent.z)
+  const fwd = droneForwardVector(yaw)
 
   return {
     position: { x: sample.position.x, y: 12, z: sample.position.z },
-    velocity: { x: 0, y: 0, z: 0 },
+    velocity: { x: fwd.x * DRONE_CRUISE_SPEED, y: 0, z: fwd.z * DRONE_CRUISE_SPEED },
     hp: maxhp,
     maxhp,
     munitions: muni,
@@ -24,7 +27,7 @@ export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, mu
     altitude: 12,
     lateralVel: 0,
     altitudeVel: 0,
-    yaw: Math.atan2(sample.tangent.x, -sample.tangent.z),
+    yaw,
     yawVel: 0,
     grounded: 0,
   }
@@ -99,6 +102,7 @@ function makeSoldier({
     catcher: !cowardly && Math.random() < catchChance,
     weaponDropped: false,
     shootTimer: 0,
+    fireCool: 0,
     catchTimer: 0,
     jamOff: 0,
     deathTimer: 0,

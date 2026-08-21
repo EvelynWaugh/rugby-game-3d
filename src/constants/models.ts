@@ -75,10 +75,10 @@ export const WEAPON_AK: ModelFitConfig & {
   attach: { position: [number, number, number]; rotation: [number, number, number]; scale: number }
 } = {
   path: '/models/weapon/ak/ak.glb',
-  targetSize: 0.48,
+  targetSize: 1.48,
   attach: {
-    position: [0.02, 0.1, 0.05],
-    rotation: [Math.PI * 0.5, Math.PI, 0],
+    position: [0.02, 0.05, 0.08],
+    rotation: [0, 0, -Math.PI * 0.5],
     scale: 1,
   },
 }

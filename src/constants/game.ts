@@ -13,6 +13,8 @@ export const DRONE_YAW_DAMPING = 0.9
 export const DRONE_YAW_MAX = 0.038
 export const DRONE_BATTERY_DRAIN = 0.009
 export const DRONE_MAX_SPEED = 0.18
+/** Idle cruise after spawn — half of max so the drone flies without stick input */
+export const DRONE_CRUISE_SPEED = DRONE_MAX_SPEED * 0.5
 export const DRONE_MAX_VERTICAL_SPEED = 0.07
 /** Propeller spin (rad/s) — idle hover vs full cruise */
 export const DRONE_PROPELLER_SPIN_HOVER = 28
@@ -37,6 +39,9 @@ export const PIG_TURN_CHANCE = 0.01
 export const CATCH_RANGE = 6.5
 export const CATCH_ALTITUDE = 4.2
 export const BULLET_HIT_RADIUS = 2
+export const BULLET_BATTERY_DRAIN = 6
+export const PIG_BULLET_SPEED = 0.55
+export const PIG_FIRE_INTERVAL = 12
 export const SOLDIER_SHOOT_RANGE = 32
 export const SOLDIER_SHOOT_RANGE_SQ = SOLDIER_SHOOT_RANGE * SOLDIER_SHOOT_RANGE
 export const DRONE_DRONE_HIT_RADIUS = 2.4

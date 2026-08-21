@@ -1,14 +1,21 @@
-import { useEffect } from 'react'
-import { GameScene } from '@/scenes/game-scene'
+import { lazy, Suspense, useEffect } from 'react'
 import { DIFFICULTY_KEYS } from '@/constants/difficulty'
 import { DifficultyMenu } from '@/components/ui/difficulty-menu'
 import { GameOver } from '@/components/ui/game-over'
 import { Hud } from '@/components/ui/hud'
 import { LevelClear } from '@/components/ui/level-clear'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 import { StartMenu } from '@/components/ui/start-menu'
+import { useModelPreload } from '@/hooks/use-model-preload'
+import { getModelPreloadStatus } from '@/systems/preload-models'
 import { useGameStore } from '@/stores/use-game-store'
 
+const GameScene = lazy(() =>
+  import('@/scenes/game-scene').then((mod) => ({ default: mod.GameScene })),
+)
+
 export function GameShell() {
+  const assets = useModelPreload()
   const gameState = useGameStore((s) => s.gameState)
   const diffSel = useGameStore((s) => s.diffSel)
   const startSel = useGameStore((s) => s.startSel)
@@ -26,6 +33,8 @@ export function GameShell() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (!getModelPreloadStatus().ready) return
+
       const state = useGameStore.getState()
 
       if (state.gameState === 'difficulty') {
@@ -75,9 +84,26 @@ export function GameShell() {
     resetGame,
   ])
 
+  if (!assets.ready) {
+    return (
+      <div className="relative h-full w-full overflow-hidden">
+        <LoadingScreen
+          progress={assets.progress}
+          loaded={assets.loaded}
+          total={assets.total}
+          item={assets.item}
+          error={assets.error}
+          onRetry={assets.retry}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <GameScene />
+      <Suspense fallback={null}>
+        <GameScene />
+      </Suspense>
       <Hud />
 
       {gameState === 'start' && (

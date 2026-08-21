@@ -2,7 +2,9 @@ import { DIFFICULTIES } from '@/constants/difficulty'
 import {
   CATCH_ALTITUDE,
   CATCH_RANGE,
+  PIG_BULLET_SPEED,
   PIG_CATCH_SPEED,
+  PIG_FIRE_INTERVAL,
   PIG_RUN_SPEED,
   PIG_TURN_CHANCE,
   PIG_WALK_SPEED,
@@ -88,6 +90,38 @@ function droneHitsBody(drone: Drone, s: Soldier) {
   return drone.position.y <= top && drone.position.y >= bot
 }
 
+function isWeaponFiring(s: Soldier) {
+  if (s.dead || s.weaponDropped) return false
+  return s.behavior === 'shoot' || s.behavior === 'aim'
+}
+
+function spawnPigBullet(s: Soldier, drone: Drone): Bullet {
+  const muzzleY = s.position.y + 1.25
+  const dx = drone.position.x - s.position.x
+  const dy = drone.position.y - muzzleY
+  const dz = drone.position.z - s.position.z
+  const dist = Math.hypot(dx, dy, dz) || 1
+  const nx = dx / dist
+  const ny = dy / dist
+  const nz = dz / dist
+
+  return {
+    id: uid('bullet'),
+    position: {
+      x: s.position.x + nx * 0.7,
+      y: muzzleY + ny * 0.7,
+      z: s.position.z + nz * 0.7,
+    },
+    velocity: {
+      x: nx * PIG_BULLET_SPEED,
+      y: ny * PIG_BULLET_SPEED,
+      z: nz * PIG_BULLET_SPEED,
+    },
+    life: 140,
+    enemy: true,
+  }
+}
+
 export interface SoldierUpdateResult {
   bullets: Bullet[]
   ramKills: Soldier[]
@@ -131,6 +165,8 @@ export function updateSoldiers({
       s.shootTimer--
       if (s.shootTimer <= 0 && s.behavior === 'shoot') s.behavior = 'biped'
     }
+
+    if ((s.fireCool ?? 0) > 0) s.fireCool--
 
     if (s.catchTimer > 0) {
       s.catchTimer--
@@ -207,18 +243,15 @@ export function updateSoldiers({
     s.cool--
     if (s.cool <= 0 && s.behavior !== 'flee' && s.behavior !== 'catch') {
       s.cool = rand(70, 160) * ds.enemyRate
-      if (inShootRange) {
+      if (inShootRange && !s.weaponDropped) {
         s.behavior = 'shoot'
         s.shootTimer = PIG_SHOOT_FRAMES
-        const dist = Math.sqrt(rangeSq) || 1
-        bullets.push({
-          id: uid('bullet'),
-          position: { ...s.position, y: s.position.y + 1.1 },
-          velocity: { x: (dx / dist) * 0.4, y: 0, z: (dz / dist) * 0.4 },
-          life: 120,
-          enemy: true,
-        })
       }
+    }
+
+    if (isWeaponFiring(s) && inShootRange && (s.fireCool ?? 0) <= 0) {
+      s.fireCool = PIG_FIRE_INTERVAL
+      bullets.push(spawnPigBullet(s, drone))
     }
   }
 

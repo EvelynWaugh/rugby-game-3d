@@ -1,5 +1,5 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
-import { DRONE_DRONE_HIT_RADIUS } from '@/constants/game'
+import { BULLET_BATTERY_DRAIN, BULLET_HIT_RADIUS, DRONE_DRONE_HIT_RADIUS, PIG_BULLET_SPEED } from '@/constants/game'
 import type { Bullet, Drone, EnemyDrone, Particle } from '@/types/game'
 import { dist3, rand, uid } from '@/utils/math'
 
@@ -59,10 +59,16 @@ export function updateEnemyDrones({
     e.cool--
     if (e.cool <= 0 && dd < 36) {
       e.cool = rand(60, 120) * ds.enemyRate
+      const dy = drone.position.y - e.position.y
+      const dist = Math.hypot(dx, dy, dz) || 1
       bullets.push({
         id: uid('bullet'),
         position: { ...e.position },
-        velocity: { x: (dx / dd) * 0.5, y: 0, z: (dz / dd) * 0.5 },
+        velocity: {
+          x: (dx / dist) * PIG_BULLET_SPEED,
+          y: (dy / dist) * PIG_BULLET_SPEED,
+          z: (dz / dist) * PIG_BULLET_SPEED,
+        },
         life: 110,
         enemy: true,
       })
@@ -85,11 +91,12 @@ export function updateBullets({
 
   for (const b of bullets) {
     b.position.x += b.velocity.x
+    b.position.y += b.velocity.y
     b.position.z += b.velocity.z
     b.life--
 
-    if (b.enemy && dist3(b.position, drone.position) < 1.6) {
-      droneDamage += 6
+    if (b.enemy && dist3(b.position, drone.position) < BULLET_HIT_RADIUS) {
+      droneDamage += BULLET_BATTERY_DRAIN
       droneHit = 10
       sparks.push(...createSparks(drone.position))
       b.life = 0
@@ -109,7 +116,7 @@ function createSparks(position: { x: number; y: number; z: number }): Particle[]
       velocity: { x: Math.cos(a) * rand(0.1, 0.4), y: rand(0.05, 0.2), z: Math.sin(a) * rand(0.1, 0.4) },
       life: rand(8, 16),
       max: 16,
-      color: '#7fdfff',
+      color: '#ffb347',
       r: rand(0.1, 0.2),
     })
   }
