@@ -38,10 +38,13 @@ export const PIG_CATCH_SPEED = 0.09
 export const PIG_TURN_CHANCE = 0.01
 export const CATCH_RANGE = 6.5
 export const CATCH_ALTITUDE = 4.2
-export const BULLET_HIT_RADIUS = 2
+/** Must match the drone mesh (~0.42m) — was 2m and counted obvious misses. */
+export const BULLET_HIT_RADIUS = 0.5
 export const BULLET_BATTERY_DRAIN = 6
 export const PIG_BULLET_SPEED = 0.55
-export const PIG_FIRE_INTERVAL = 12
+/** Frames between shots in a burst (~1.5/s). */
+export const PIG_FIRE_INTERVAL = 40
+export const PIG_BULLET_SPREAD = 0.028
 export const SOLDIER_SHOOT_RANGE = 32
 export const SOLDIER_SHOOT_RANGE_SQ = SOLDIER_SHOOT_RANGE * SOLDIER_SHOOT_RANGE
 export const DRONE_DRONE_HIT_RADIUS = 2.4

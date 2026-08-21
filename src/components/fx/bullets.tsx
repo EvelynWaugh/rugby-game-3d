@@ -40,11 +40,11 @@ function BulletTracer({ bullet }: { bullet: Bullet }) {
   return (
     <group ref={groupRef}>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <capsuleGeometry args={[0.045, 0.42, 3, 6]} />
+        <capsuleGeometry args={[0.03, 0.22, 3, 6]} />
         <meshBasicMaterial color={color} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[0.07, 6, 6]} />
+        <sphereGeometry args={[0.045, 6, 6]} />
         <meshBasicMaterial color="#ffe6a3" />
       </mesh>
     </group>

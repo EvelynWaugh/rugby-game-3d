@@ -3,6 +3,7 @@ import {
   CATCH_ALTITUDE,
   CATCH_RANGE,
   PIG_BULLET_SPEED,
+  PIG_BULLET_SPREAD,
   PIG_CATCH_SPEED,
   PIG_FIRE_INTERVAL,
   PIG_RUN_SPEED,
@@ -92,30 +93,36 @@ function droneHitsBody(drone: Drone, s: Soldier) {
 
 function isWeaponFiring(s: Soldier) {
   if (s.dead || s.weaponDropped) return false
-  return s.behavior === 'shoot' || s.behavior === 'aim'
+  return s.behavior === 'shoot'
 }
 
 function spawnPigBullet(s: Soldier, drone: Drone): Bullet {
   const muzzleY = s.position.y + 1.25
-  const dx = drone.position.x - s.position.x
-  const dy = drone.position.y - muzzleY
-  const dz = drone.position.z - s.position.z
-  const dist = Math.hypot(dx, dy, dz) || 1
-  const nx = dx / dist
-  const ny = dy / dist
-  const nz = dz / dist
+  const toX = drone.position.x - s.position.x
+  const toY = drone.position.y - muzzleY
+  const toZ = drone.position.z - s.position.z
+  const dist = Math.hypot(toX, toY, toZ) || 1
+  const eta = Math.min(dist / PIG_BULLET_SPEED, 36)
+
+  let dx = toX + drone.velocity.x * eta + rand(-PIG_BULLET_SPREAD, PIG_BULLET_SPREAD) * dist
+  let dy = toY + drone.velocity.y * eta + rand(-PIG_BULLET_SPREAD, PIG_BULLET_SPREAD) * dist
+  let dz = toZ + drone.velocity.z * eta + rand(-PIG_BULLET_SPREAD, PIG_BULLET_SPREAD) * dist
+  const aimDist = Math.hypot(dx, dy, dz) || 1
+  dx /= aimDist
+  dy /= aimDist
+  dz /= aimDist
 
   return {
     id: uid('bullet'),
     position: {
-      x: s.position.x + nx * 0.7,
-      y: muzzleY + ny * 0.7,
-      z: s.position.z + nz * 0.7,
+      x: s.position.x + dx * 0.7,
+      y: muzzleY + dy * 0.7,
+      z: s.position.z + dz * 0.7,
     },
     velocity: {
-      x: nx * PIG_BULLET_SPEED,
-      y: ny * PIG_BULLET_SPEED,
-      z: nz * PIG_BULLET_SPEED,
+      x: dx * PIG_BULLET_SPEED,
+      y: dy * PIG_BULLET_SPEED,
+      z: dz * PIG_BULLET_SPEED,
     },
     life: 140,
     enemy: true,

@@ -1,7 +1,7 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
 import { BULLET_BATTERY_DRAIN, BULLET_HIT_RADIUS, DRONE_DRONE_HIT_RADIUS, PIG_BULLET_SPEED } from '@/constants/game'
 import type { Bullet, Drone, EnemyDrone, Particle } from '@/types/game'
-import { dist3, rand, uid } from '@/utils/math'
+import { distPointToSegment, rand, uid } from '@/utils/math'
 
 export function updateEnemyDrones({
   enemyDrones,
@@ -90,12 +90,13 @@ export function updateBullets({
   const sparks: Particle[] = []
 
   for (const b of bullets) {
+    const from = { x: b.position.x, y: b.position.y, z: b.position.z }
     b.position.x += b.velocity.x
     b.position.y += b.velocity.y
     b.position.z += b.velocity.z
     b.life--
 
-    if (b.enemy && dist3(b.position, drone.position) < BULLET_HIT_RADIUS) {
+    if (b.enemy && distPointToSegment(drone.position, from, b.position) < BULLET_HIT_RADIUS) {
       droneDamage += BULLET_BATTERY_DRAIN
       droneHit = 10
       sparks.push(...createSparks(drone.position))
