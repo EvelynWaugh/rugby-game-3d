@@ -1,7 +1,8 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
-import { PIG_WALK_SPEED } from '@/constants/game'
+import { PIG_WALK_SPEED, RAT_WALK_SPEED } from '@/constants/game'
+import { SHELTER_INTERIOR_RATIO, SHELTER_WORLD } from '@/constants/models'
 import { getLevelPath, samplePath, spawnAlongPath } from '@/systems/path-system'
-import type { DifficultyKey, Drone, EnemyDrone, EwTower, LevelConfig, Shelter, Soldier } from '@/types/game'
+import type { DifficultyKey, Drone, EnemyDrone, EwTower, LevelConfig, Rat, Shelter, Soldier } from '@/types/game'
 import { rand, uid } from '@/utils/math'
 import type { CatmullRomCurve3 } from 'three'
 
@@ -49,8 +50,72 @@ function randomPathT(index: number, total: number, min = 0.15, max = 0.92) {
   return clampSpawn(min + step * index + rand(-0.03, 0.03))
 }
 
+function evenPathT(index: number, total: number, min = 0.12, max = 0.97) {
+  if (total <= 1) return (min + max) / 2
+  return min + (index / (total - 1)) * (max - min)
+}
+
 function clampSpawn(t: number) {
   return Math.max(0.12, Math.min(0.95, t))
+}
+
+function makeSoldier({
+  idPrefix,
+  pos,
+  pig,
+  hp,
+  walkSpeed,
+  coolScale,
+  cowardChance,
+  catchChance,
+  lvImmune,
+}: {
+  idPrefix: string
+  pos: { x: number; y: number; z: number }
+  pig: boolean
+  hp: number
+  walkSpeed: number
+  coolScale: number
+  cowardChance: number
+  catchChance: number
+  lvImmune: boolean
+}): Soldier {
+  const angle = rand(0, Math.PI * 2)
+  const cowardly = Math.random() < cowardChance
+  return {
+    id: uid(idPrefix),
+    position: { ...pos },
+    spawnPosition: { ...pos },
+    velocity: { x: Math.sin(angle) * walkSpeed, y: 0, z: Math.cos(angle) * walkSpeed },
+    hp,
+    maxhp: hp,
+    cool: rand(60, 180) * coolScale,
+    dead: false,
+    pig,
+    immune: lvImmune,
+    visible: true,
+    behavior: 'biped',
+    cowardly,
+    catcher: !cowardly && Math.random() < catchChance,
+    weaponDropped: false,
+    shootTimer: 0,
+    catchTimer: 0,
+    jamOff: 0,
+    deathTimer: 0,
+    deathVariant: 'shot',
+  }
+}
+
+function makeRat({ halfX, halfZ }: { halfX: number; halfZ: number }): Rat {
+  const angle = rand(0, Math.PI * 2)
+  return {
+    ox: rand(-halfX, halfX),
+    oz: rand(-halfZ, halfZ),
+    vx: Math.sin(angle) * RAT_WALK_SPEED,
+    vz: Math.cos(angle) * RAT_WALK_SPEED,
+    dead: false,
+    phase: rand(0, Math.PI * 2),
+  }
 }
 
 export function spawnEntitiesForLevel({
@@ -71,97 +136,73 @@ export function spawnEntitiesForLevel({
   const enemyDrones: EnemyDrone[] = []
   const ewTowers: EwTower[] = []
 
-  for (let i = 0; i < levelData.soldiers; i++) {
-    const angle = rand(0, Math.PI * 2)
+  const totalPigs = levelData.soldiers + (levelData.reds || 0)
+  const onRoad = level === 1
+  let redBudget = 0
+
+  for (let i = 0; i < totalPigs; i++) {
+    const redsLeft = (levelData.reds || 0) - redBudget
+    const spawnRed = redsLeft > 0 && (i + 1) * (levelData.reds || 0) > redBudget * totalPigs
+    if (spawnRed) redBudget++
+
+    const side = i % 2 === 0 ? -1 : 1
+    const lateral = onRoad
+      ? side * (1.6 + (i % 4) * 0.55)
+      : rand(-16, 16)
     const pos = spawnAlongPath({
       curve,
-      pathT: randomPathT(i, levelData.soldiers + levelData.reds + levelData.shelters),
-      lateral: rand(-18, 18),
+      pathT: evenPathT(i, totalPigs, 0.12, 0.97),
+      lateral,
     })
-    const cowardly = Math.random() < 0.4
-    soldiers.push({
-      id: uid('pig'),
-      position: { ...pos },
-      spawnPosition: { ...pos },
-      velocity: { x: Math.sin(angle) * PIG_WALK_SPEED, y: 0, z: Math.cos(angle) * PIG_WALK_SPEED },
-      hp: 1,
-      maxhp: 1,
-      cool: rand(60, 180) * ds.enemyRate,
-      dead: false,
-      pig: true,
-      immune: lvImmune,
-      visible: true,
-      behavior: 'biped',
-      cowardly,
-      catcher: !cowardly && Math.random() < 0.5,
-      weaponDropped: false,
-      shootTimer: 0,
-      catchTimer: 0,
-      jamOff: 0,
-      deathTimer: 0,
-      deathVariant: 'shot',
-    })
+
+    soldiers.push(
+      spawnRed
+        ? makeSoldier({
+            idPrefix: 'red',
+            pos,
+            pig: false,
+            hp: 2,
+            walkSpeed: PIG_WALK_SPEED * 0.7,
+            coolScale: ds.enemyRate,
+            cowardChance: 0.3,
+            catchChance: 0.45,
+            lvImmune,
+          })
+        : makeSoldier({
+            idPrefix: 'pig',
+            pos,
+            pig: true,
+            hp: 1,
+            walkSpeed: PIG_WALK_SPEED,
+            coolScale: ds.enemyRate,
+            cowardChance: 0.4,
+            catchChance: 0.5,
+            lvImmune,
+          }),
+    )
   }
 
-  for (let i = 0; i < (levelData.reds || 0); i++) {
-    const angle = rand(0, Math.PI * 2)
-    const walk = PIG_WALK_SPEED * 0.7
-    const pos = spawnAlongPath({
-      curve,
-      pathT: randomPathT(i + levelData.soldiers, levelData.soldiers + levelData.reds + levelData.shelters),
-      lateral: rand(-18, 18),
-    })
-    const cowardly = Math.random() < 0.3
-    soldiers.push({
-      id: uid('red'),
-      position: { ...pos },
-      spawnPosition: { ...pos },
-      velocity: { x: Math.sin(angle) * walk, y: 0, z: Math.cos(angle) * walk },
-      hp: 2,
-      maxhp: 2,
-      cool: rand(50, 150) * ds.enemyRate,
-      dead: false,
-      pig: false,
-      immune: lvImmune,
-      visible: true,
-      behavior: 'biped',
-      cowardly,
-      catcher: !cowardly && Math.random() < 0.45,
-      weaponDropped: false,
-      shootTimer: 0,
-      catchTimer: 0,
-      jamOff: 0,
-      deathTimer: 0,
-      deathVariant: 'shot',
-    })
-  }
+  const { w, h, d } = SHELTER_WORLD
+  const halfX = (w / 2) * SHELTER_INTERIOR_RATIO
+  const halfZ = (d / 2) * SHELTER_INTERIOR_RATIO
 
   for (let i = 0; i < levelData.shelters; i++) {
-    const w = 4.6
-    const h = 3.8
-    const pos = spawnAlongPath({
-      curve,
-      pathT: randomPathT(i, levelData.shelters, 0.25, 0.85),
-      lateral: rand(-12, 12),
-      groundY: 0,
-    })
-    const rats = []
-    const numRats = Math.floor(rand(2, 5))
-    for (let r = 0; r < numRats; r++) {
-      rats.push({
-        ox: rand(-w / 2 + 1.4, w / 2 - 1.4),
-        oy: rand(-h / 2 + 1.2, h / 2 - 1.2),
-        dead: false,
-        phase: rand(0, Math.PI * 2),
-      })
-    }
+    const pathT = evenPathT(i, Math.max(levelData.shelters, 1), 0.32, 0.78)
+    const lateral = (i % 2 === 0 ? -1 : 1) * rand(11, 15)
+    const sample = samplePath({ curve, pathT, lateral, altitude: 0 })
+    const numRats = 4
+    const rats: Rat[] = []
+    for (let r = 0; r < numRats; r++) rats.push(makeRat({ halfX, halfZ }))
+
     shelters.push({
       id: uid('shelter'),
-      position: { x: pos.x, y: 0.5, z: pos.z },
+      position: { x: sample.position.x, y: 0, z: sample.position.z },
       hp: 60,
       maxhp: 60,
       w,
+      d,
       h,
+      yaw: Math.atan2(sample.tangent.x, -sample.tangent.z),
       dead: false,
       command: false,
       rats,

@@ -83,9 +83,59 @@ export const WEAPON_AK: ModelFitConfig & {
   },
 }
 
+/** Raw shelter.glb bbox (Y-up). Fitted so the longest axis equals targetSize. */
+const SHELTER_RAW = { x: 1.8987, y: 0.6774, z: 1.8333 }
+
+export const SHELTER_MODEL: ModelFitConfig = {
+  path: '/models/shelter/shelter.glb',
+  targetSize: 10,
+}
+
+const SHELTER_FIT =
+  SHELTER_MODEL.targetSize / Math.max(SHELTER_RAW.x, SHELTER_RAW.y, SHELTER_RAW.z)
+
+export const SHELTER_WORLD = {
+  w: SHELTER_RAW.x * SHELTER_FIT,
+  h: SHELTER_RAW.y * SHELTER_FIT,
+  d: SHELTER_RAW.z * SHELTER_FIT,
+}
+
+/** Fraction of half-extent rats may occupy so they stay inside the walls. */
+export const SHELTER_INTERIOR_RATIO = 0.55
+
+/** rat.glb Armature is cm-scaled (0.01), same as the pig. */
+export const RAT_TARGET_HEIGHT = 0.5
+
+export const RAT_MODEL = {
+  path: '/models/rat/rat.glb',
+  targetHeight: RAT_TARGET_HEIGHT,
+} as const
+
+export const RAT_CLIPS = {
+  walk: { clip: 'Walking', loop: true },
+  die: { clip: 'Fall_Dead_from_Abdominal_Injury', loop: false },
+} as const satisfies Record<string, PigClipConfig>
+
+export type RatAnimKey = keyof typeof RAT_CLIPS
+
+export const ENV_MODELS = {
+  greenTree: { path: '/models/trees/green-tree.glb', targetSize: 8.5 },
+  fallenTree: { path: '/models/trees/fallen-tree.glb', targetSize: 5.5 },
+  fallenTree2: { path: '/models/trees/fallen-tree-2.glb', targetSize: 4.5 },
+  fallenTree3: { path: '/models/trees/fallen-tree-3.glb', targetSize: 6 },
+  crate: { path: '/models/crate/crate.glb', targetSize: 1.35 },
+  granit: { path: '/models/granit/granit.glb', targetSize: 2.1 },
+  dirt: { path: '/models/dirt/dirt.glb', targetSize: 4.2 },
+  wall: { path: '/models/damaged-wall/wall.glb', targetSize: 7 },
+  terrain: { path: '/models/terrain/terrain.glb', targetSize: 16 },
+} as const satisfies Record<string, ModelFitConfig>
+
 export const ALL_MODEL_PATHS = [
   DRONE_MODEL.path,
   BALL_MODEL.path,
   WEAPON_AK.path,
   PIG_MODEL.path,
+  SHELTER_MODEL.path,
+  RAT_MODEL.path,
+  ...Object.values(ENV_MODELS).map((m) => m.path),
 ]

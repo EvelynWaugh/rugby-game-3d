@@ -87,7 +87,9 @@ export interface Soldier {
 
 export interface Rat {
   ox: number
-  oy: number
+  oz: number
+  vx: number
+  vz: number
   dead: boolean
   phase: number
 }
@@ -98,7 +100,9 @@ export interface Shelter {
   hp: number
   maxhp: number
   w: number
+  d: number
   h: number
+  yaw: number
   dead: boolean
   command: boolean
   rats: Rat[]

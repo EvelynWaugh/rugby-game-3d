@@ -1,61 +1,109 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
-import type { Shelter } from '@/types/game'
-import { useGameStore } from '@/stores/use-game-store'
+import { RatAnimatedModel } from '@/components/models/rat-animated-model'
+import { StaticModel } from '@/components/models/static-model'
+import { ENV_MODELS, SHELTER_MODEL, SHELTER_WORLD } from '@/constants/models'
+import type { Rat, Shelter } from '@/types/game'
 
-function Rat({ x, z, dead, frame, phase }: { x: number; z: number; dead: boolean; frame: number; phase: number }) {
-  if (dead) return null
-  const twitch = Math.sin(frame * 0.35 + phase) * 0.06
+function PlaceholderShelter({ dead, command }: { dead: boolean; command: boolean }) {
   return (
-    <mesh position={[x + twitch, 0.3, z]} castShadow>
-      <sphereGeometry args={[0.15, 6, 6]} />
+    <mesh castShadow receiveShadow position={[0, SHELTER_WORLD.h / 2, 0]}>
+      <boxGeometry args={[SHELTER_WORLD.w, SHELTER_WORLD.h, SHELTER_WORLD.d]} />
+      <meshStandardMaterial
+        color={dead ? '#181c22' : command ? '#4a1f1f' : '#2a3340'}
+      />
+    </mesh>
+  )
+}
+
+function PlaceholderRat() {
+  return (
+    <mesh castShadow position={[0, 0.12, 0]}>
+      <sphereGeometry args={[0.12, 8, 8]} />
       <meshStandardMaterial color="#6a6a6a" />
     </mesh>
   )
 }
 
+function ShelterRat({ rat, shelterDead }: { rat: Rat; shelterDead: boolean }) {
+  const groupRef = useRef<Group>(null)
+  const facingRef = useRef(Math.atan2(rat.vx, rat.vz))
+  const isDead = rat.dead || shelterDead
+
+  useFrame(() => {
+    if (!groupRef.current) return
+    groupRef.current.position.set(rat.ox, 0, rat.oz)
+
+    if (isDead) {
+      groupRef.current.rotation.y = facingRef.current
+      return
+    }
+
+    if (Math.hypot(rat.vx, rat.vz) > 0.0002)
+      facingRef.current = Math.atan2(rat.vx, rat.vz)
+
+    groupRef.current.rotation.y = facingRef.current
+  })
+
+  return (
+    <group ref={groupRef} position={[rat.ox, 0, rat.oz]}>
+      <RatAnimatedModel
+        animKey={isDead ? 'die' : 'walk'}
+        fallback={<PlaceholderRat />}
+      />
+    </group>
+  )
+}
+
 export function ShelterMesh({ shelter }: { shelter: Shelter }) {
   const groupRef = useRef<Group>(null)
-  const frame = useGameStore((s) => s.frame)
+  const hpRatio = shelter.hp / shelter.maxhp
 
   useFrame(() => {
     if (!groupRef.current) return
     groupRef.current.position.set(shelter.position.x, shelter.position.y, shelter.position.z)
+    groupRef.current.rotation.set(
+      shelter.dead ? 0.12 : 0,
+      shelter.yaw,
+      shelter.dead ? 0.06 : 0,
+    )
   })
-
-  const w = shelter.w
-  const h = shelter.h
-  const hpRatio = shelter.hp / shelter.maxhp
 
   return (
     <group ref={groupRef}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[w, h, w * 0.8]} />
-        <meshStandardMaterial
-          color={shelter.dead ? '#181c22' : shelter.command ? '#4a1f1f' : '#2a3340'}
-        />
-      </mesh>
-      {!shelter.dead && (
-        <mesh position={[0, h / 2 + 0.3, 0]}>
-          <boxGeometry args={[w * 0.6, 0.15, 0.1]} />
-          <meshStandardMaterial color={shelter.command ? '#ff5a5a' : '#ffcf6b'} emissive={shelter.command ? '#551111' : '#332200'} emissiveIntensity={0.3} />
-        </mesh>
-      )}
+      <StaticModel
+        path={SHELTER_MODEL.path}
+        targetSize={SHELTER_MODEL.targetSize}
+        ground
+        tint={shelter.command ? '#cc3333' : undefined}
+        fallback={<PlaceholderShelter dead={shelter.dead} command={shelter.command} />}
+      />
+      <StaticModel
+        path={ENV_MODELS.crate.path}
+        targetSize={ENV_MODELS.crate.targetSize}
+        position={[SHELTER_WORLD.w * 0.58, 0, SHELTER_WORLD.d * 0.22]}
+        rotation={[0, 0.4, 0]}
+        ground
+      />
+      <StaticModel
+        path={ENV_MODELS.crate.path}
+        targetSize={ENV_MODELS.crate.targetSize * 0.9}
+        position={[SHELTER_WORLD.w * 0.58, 0, SHELTER_WORLD.d * 0.22 - 1.2]}
+        rotation={[0, -0.2, 0]}
+        ground
+      />
       {shelter.rats.map((rat, i) => (
-        <Rat
-          key={i}
-          x={rat.ox}
-          z={rat.oy}
-          dead={rat.dead || shelter.dead}
-          frame={frame}
-          phase={rat.phase}
-        />
+        <ShelterRat key={i} rat={rat} shelterDead={shelter.dead} />
       ))}
       {!shelter.dead && (
-        <mesh position={[0, h / 2 + 0.6, w * 0.45]}>
-          <boxGeometry args={[w * hpRatio, 0.12, 0.05]} />
-          <meshStandardMaterial color={shelter.command ? '#ff5a5a' : '#ffcf6b'} />
+        <mesh position={[0, SHELTER_WORLD.h + 0.45, 0]}>
+          <boxGeometry args={[Math.max(SHELTER_WORLD.w * hpRatio, 0.05), 0.12, 0.08]} />
+          <meshStandardMaterial
+            color={shelter.command ? '#ff5a5a' : '#ffcf6b'}
+            emissive={shelter.command ? '#551111' : '#332200'}
+            emissiveIntensity={0.35}
+          />
         </mesh>
       )}
     </group>

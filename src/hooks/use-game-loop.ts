@@ -6,6 +6,7 @@ import { tickSoldierDeathTimers } from '@/systems/soldier-death'
 import { checkExplosion, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
 import { dropMunition, updateMunitions } from '@/systems/update-munitions'
 import { computeWind, updateDrone } from '@/systems/update-drone'
+import { updateRats } from '@/systems/update-rats'
 import { updateSoldiers } from '@/systems/update-soldiers'
 import { filterBullets, updateBullets, updateEnemyDrones } from '@/systems/update-enemy-drones'
 import { dist3 } from '@/utils/math'
@@ -30,7 +31,11 @@ export function useGameLoop() {
       spawnPosition: { ...s.spawnPosition },
       velocity: { ...s.velocity },
     }))
-    const shelters = state.shelters.map((s) => ({ ...s, position: { ...s.position } }))
+    const shelters = state.shelters.map((s) => ({
+      ...s,
+      position: { ...s.position },
+      rats: s.rats.map((r) => ({ ...r })),
+    }))
     const enemyDrones = state.enemyDrones.map((e) => ({ ...e, position: { ...e.position }, velocity: { ...e.velocity } }))
     const ewTowers = state.ewTowers.map((t) => ({ ...t, position: { ...t.position } }))
     let munitions = state.munitions.map((m) => ({
@@ -159,6 +164,7 @@ export function useGameLoop() {
     bullets = filterBullets(bullets)
 
     tickSoldierDeathTimers(soldiers)
+    updateRats({ shelters })
 
     particles = updateParticles(particles)
     smoke = updateSmoke(smoke)

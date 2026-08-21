@@ -30,6 +30,7 @@ export const LANE_HALF = 25
 export const MIN_ALTITUDE = 0.5
 export const MAX_ALTITUDE = 40
 export const PIG_WALK_SPEED = 0.032
+export const RAT_WALK_SPEED = 0.014
 export const PIG_RUN_SPEED = 0.068
 export const PIG_CATCH_SPEED = 0.09
 export const PIG_TURN_CHANCE = 0.01

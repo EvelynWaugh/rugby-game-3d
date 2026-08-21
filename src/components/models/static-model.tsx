@@ -35,14 +35,15 @@ function StaticModelInner({
     if (tint) {
       const c = new THREE.Color(tint)
       cloned.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh
-          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-          for (const mat of mats) {
-            const m = mat as THREE.MeshStandardMaterial
-            if (m.color) m.color.lerp(c, 0.25)
-          }
-        }
+        if (!(child as THREE.Mesh).isMesh) return
+        const mesh = child as THREE.Mesh
+        const source = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        const tinted = source.map((mat) => {
+          const m = (mat as THREE.MeshStandardMaterial).clone()
+          if (m.color) m.color.lerp(c, 0.28)
+          return m
+        })
+        mesh.material = Array.isArray(mesh.material) ? tinted : tinted[0]
       })
     }
     return cloned

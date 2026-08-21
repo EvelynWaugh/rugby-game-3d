@@ -18,6 +18,9 @@ public/models/
   ball/ball.glb
   weapon/ak/ak.glb
   pig/pig.glb              — single skinned pig with all animation clips
+  shelter/shelter.glb      — bunker (replaces the box placeholder)
+  rat/rat.glb              — skinned rats inside shelters (Walking, Fall_Dead_from_Abdominal_Injury)
+  trees/*.glb, crate/, granit/, dirt/, damaged-wall/, terrain/ — Outskirts dressing
 ```
 
 Legacy per-clip pig GLBs may still exist on disk but are **not used** — all clips are in `pig.glb`.

@@ -51,12 +51,12 @@ export function applyExplosionDamage({
   for (const sh of shelters) {
     if (sh.dead) continue
     const halfW = sh.w / 2 + 1.5
-    const halfH = sh.h / 2 + 1.5
+    const halfD = sh.d / 2 + 1.5
     if (
       x > sh.position.x - halfW &&
       x < sh.position.x + halfW &&
-      z > sh.position.z - halfH &&
-      z < sh.position.z + halfH
+      z > sh.position.z - halfD &&
+      z < sh.position.z + halfD
     ) {
       sh.hp -= SHELTER_EXPLOSION_DAMAGE
       if (sh.hp <= 0) {
@@ -93,12 +93,12 @@ export function findShelterProximityDetonation({
   for (const sh of shelters) {
     if (sh.dead) continue
     const halfW = sh.w / 2 + 1
-    const halfH = sh.h / 2 + 1
+    const halfD = sh.d / 2 + 1
     if (
       x > sh.position.x - halfW &&
       x < sh.position.x + halfW &&
-      z > sh.position.z - halfH &&
-      z < sh.position.z + halfH
+      z > sh.position.z - halfD &&
+      z < sh.position.z + halfD
     ) return true
   }
 
