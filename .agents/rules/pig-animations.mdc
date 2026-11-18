@@ -1,0 +1,51 @@
+---
+description: Single-file pig.glb animation clips, in-place locomotion, and FPV ram
+globs: src/components/models/pig-animated-model.tsx,src/components/enemies/pig-soldier.tsx,src/constants/models.ts,src/systems/update-soldiers.ts
+alwaysApply: false
+---
+
+# Pig Animations (single GLB)
+
+All pig clips live in **`public/models/pig/pig.glb`**. Registry: `PIG_MODEL` + `PIG_CLIPS` in `src/constants/models.ts`.
+
+The GLB Armature is **cm-scaled (0.01)**. `fitSkinnedToHeight` must call `updateMatrixWorld(true)` and use `PIG_TARGET_HEIGHT` (~1.65m).
+
+## Clip names (inside pig.glb)
+
+| Key | Clip name | Loop |
+|-----|-----------|------|
+| walk / walkGun | Walking | yes |
+| run | Running | yes |
+| aim / shoot | Walk_Backward_While_Shooting | yes |
+| catch | Leap_Right_and_Catch | no |
+| deathAbdominal / deathShot | Dead | no |
+
+## In-place clips + world locomotion
+
+Walk / run / shoot clips do **not** travel. `update-soldiers.ts` writes `soldier.position`.
+
+- Patrol (`biped`): `PIG_WALK_SPEED`, face velocity.
+- Flee (`cowardly`): `Running`, `PIG_RUN_SPEED`, drop weapon.
+- Catch (`catcher`): `Leap_Right_and_Catch` when the drone is close and low (`CATCH_RANGE` / `CATCH_ALTITUDE`).
+- Shoot: `Walk_Backward_While_Shooting`, back away from the drone, **AK parented to `RightHand`**.
+- Dead: `Dead`.
+
+## Component pattern
+
+- `PigAnimatedModel` — `SkeletonUtils.clone`, `useAnimations` on the cloned mesh ref, crossfade clips.
+- AK is a `WeaponAk` that follows the `RightHand` bone (world → pig-local). Visible only while aiming/shooting.
+
+## FPV ram
+
+Contact is a **body capsule**, not distance-to-feet:
+
+- Horizontal: `RAM_HORIZ` (~1.7)
+- Vertical: drone Y between ground and `PIG_TARGET_HEIGHT + RAM_ALT_MARGIN`
+
+Ram kills **every** pig-mesh soldier (including red-tinted ones). Level 1 spawns reds that use the same GLB — do not require `s.pig === true`. Then `checkExplosion` at the impact.
+
+## AI roles (`setup-level.ts`)
+
+- ~40% `cowardly` — run away when the drone is within flee range.
+- ~half of the rest `catcher` — leap/catch when the drone flies near and low.
+- Remaining — shoot with AK.

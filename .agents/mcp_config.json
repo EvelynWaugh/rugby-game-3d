@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+      "blender-lab": {
+        "command": "python",
+        "args": [
+          "C:\\Users\\RUGBY TEAM\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\extensions\\lab_blender_org\\mcp\\mcp_to_blender_server.py"
+        ]
+      }
+    }
+  }

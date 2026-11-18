@@ -1,0 +1,20 @@
+---
+description: Game logic conventions for Sky Sovereign 3D
+globs: src/systems/**,src/stores/**,src/hooks/use-game-loop.ts
+alwaysApply: false
+---
+
+# Game Systems
+
+- Keep game rules in `src/systems/` as pure functions
+- Zustand store holds state; components only render
+- Port behavior from `rugby-game/rugby-game.html` when in doubt
+- Do not put combat or win logic inside R3F components
+
+## Drone feel
+
+Forward (W / ArrowUp) and altitude (R / F) must **ease**, not snap. Tune `DRONE_THRUST`, `DRONE_ALTITUDE_THRUST`, `DRONE_MAX_SPEED`, and `DRONE_MAX_VERTICAL_SPEED` in `src/constants/game.ts`. Vertical speed is capped separately — do not reuse the huge horizontal thrust on F/R.
+
+## FPV ram
+
+Pigs (including red-tinted pig meshes) die from rugby explosions **and** from the drone hitting their body (`RAM_HORIZ` + altitude overlap). A ram runs `checkExplosion` at the pig and applies `RAM_DAMAGE` to the drone. Do not require `soldier.pig === true` — level 1 reds use the same model.

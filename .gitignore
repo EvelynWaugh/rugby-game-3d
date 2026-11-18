@@ -4,3 +4,4 @@ dist
 *.local
 # GLB binaries stay local (large) — paths listed in public/models/MANIFEST.md
 public/models/**/*.glb
+*.code-workspace
