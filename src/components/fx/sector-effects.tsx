@@ -62,23 +62,3 @@ export function SectorHazards() {
     </group>
   )
 }
-
-export function BlastMarks() {
-  const marks = useGameStore(s => s.blastMarks)
-  const frame = useGameStore(s => s.frame)
-  return marks.map(mark => {
-    const age = frame - mark.frame
-    return (
-      <group key={mark.id} position={[mark.x, 0.045, mark.z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <mesh scale={2.7}>
-          <circleGeometry args={[1, 24]} />
-          <meshBasicMaterial color="#382f27" transparent opacity={0.48 * (1 - age / 600)} depthWrite={false} />
-        </mesh>
-        {age < 24 && <mesh scale={0.6 + Math.sqrt(age / 24) * 7.4} position={[0, 0, 0.035]}>
-          <ringGeometry args={[0.88, 1, 48]} />
-          <meshBasicMaterial color="#ffe2a4" transparent opacity={1 - age / 24} depthWrite={false} />
-        </mesh>}
-      </group>
-    )
-  })
-}

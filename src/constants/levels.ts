@@ -9,7 +9,7 @@ export const LEVELS: Record<number, LevelConfig> = {
     drones: 0,
     patrols: 0,
     ew: 0,
-    soldiers: 12,
+    soldiers: 3,
     reds: 4,
     shelters: 2,
     win: 'targets',

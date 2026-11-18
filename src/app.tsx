@@ -29,6 +29,8 @@ export function GameShell() {
   const setBossRoundOnly = useGameStore((s) => s.setBossRoundOnly)
   const startGame = useGameStore((s) => s.startGame)
   const startBossGame = useGameStore((s) => s.startBossGame)
+  const retryLevel = useGameStore(s => s.retryLevel)
+  const level = useGameStore(s => s.level)
   const resetGame = useGameStore((s) => s.resetGame)
   const bossRoundOnly = useGameStore((s) => s.bossRoundOnly)
 
@@ -66,7 +68,9 @@ export function GameShell() {
       } else if (state.gameState === 'levelclear' && (e.key === ' ' || e.key === 'Enter')) {
         state.nextLevel()
       } else if ((state.gameState === 'gameover' || state.gameState === 'victory') && (e.key === ' ' || e.key === 'Enter')) {
-        resetGame()
+        e.preventDefault()
+        if (state.gameState === 'victory') resetGame()
+        else state.retryLevel()
       } else if (state.gameState === 'playing' && e.code === 'KeyV') {
         state.patch({ downView: !state.downView })
       } else if (state.gameState === 'playing' && e.key === ' ') {
@@ -153,7 +157,8 @@ export function GameShell() {
         <GameOver
           score={score}
           victory={gameState === 'victory'}
-          onRestart={resetGame}
+          level={level}
+          onRestart={gameState === 'victory' ? resetGame : retryLevel}
         />
       )}
     </div>

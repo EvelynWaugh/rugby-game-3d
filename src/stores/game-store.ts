@@ -9,9 +9,9 @@ import type {
   EwTower,
   Munition,
   Particle,
-  PigPart,
+  ImpactView,
+  Aftermath,
   Shelter,
-  Smoke,
   Soldier,
   Wind,
 } from '@/types/game'
@@ -36,8 +36,9 @@ export interface GameStoreState {
   munitions: Munition[]
   bullets: Bullet[]
   particles: Particle[]
-  smoke: Smoke[]
-  pigParts: PigPart[]
+  impactView: ImpactView | null
+  aftermath: Aftermath | null
+  entryScore: number
   cargoNets: CargoNet[]
   blastMarks: BlastMark[]
   fallenTrees: number[]
@@ -58,7 +59,8 @@ export interface GameStoreState {
   startGame: () => void
   startBossGame: () => void
   nextLevel: () => void
-  setupLevel: (level: number) => void
+  retryLevel: () => void
+  setupLevel: (level: number, score?: number) => void
   queueDrop: () => void
   patch: (partial: Partial<GameStoreState>) => void
 }
@@ -82,8 +84,9 @@ const initialMenuState = {
   munitions: [] as Munition[],
   bullets: [] as Bullet[],
   particles: [] as Particle[],
-  smoke: [] as Smoke[],
-  pigParts: [] as PigPart[],
+  impactView: null as ImpactView | null,
+  aftermath: null as Aftermath | null,
+  entryScore: 0,
   cargoNets: [] as CargoNet[],
   blastMarks: [] as BlastMark[],
   fallenTrees: [] as number[],
@@ -125,7 +128,7 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
       set(() => ({ bossRoundOnly }))
     },
 
-    setupLevel(level) {
+    setupLevel(level, score = get().score) {
       const levelData = LEVELS[level]
       if (!levelData) return
 
@@ -145,8 +148,10 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
         munitions: [],
         bullets: [],
         particles: [],
-        smoke: [],
-        pigParts: [],
+        impactView: null,
+        aftermath: null,
+        score,
+        entryScore: score,
         cargoNets: [],
         blastMarks: [],
         fallenTrees: [],
@@ -163,14 +168,21 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
 
     startGame() {
       const state = get()
-      state.setupLevel(1)
+      state.setupLevel(1, 0)
       set(() => ({ gameState: 'playing', score: 0, bossRoundOnly: false }))
     },
 
     startBossGame() {
       const state = get()
-      state.setupLevel(FINAL_LEVEL)
+      state.setupLevel(FINAL_LEVEL, 0)
       set(() => ({ gameState: 'playing', score: 0 }))
+    },
+
+    retryLevel() {
+      const state = get()
+      if (state.gameState !== 'gameover') return
+      state.setupLevel(state.level, state.entryScore)
+      set(() => ({ gameState: 'playing' }))
     },
 
     nextLevel() {

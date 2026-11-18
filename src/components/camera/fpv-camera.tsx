@@ -21,10 +21,20 @@ export function FpvCamera() {
   const shake = useGameStore((s) => s.shake)
 
   useFrame(() => {
-    const { drone, downView } = useGameStore.getState()
+    const { drone, downView, aftermath } = useGameStore.getState()
     if (!drone) return
 
     droneForwardVector(drone.yaw, forward)
+
+    if (aftermath?.groundCrash) {
+      camera.position.copy(drone.position).addScaledVector(forward, -6.8)
+      camera.position.y += 3
+      lookTarget.copy(drone.position)
+      lookTarget.y += 1
+      camera.up.copy(worldUp)
+      camera.lookAt(lookTarget)
+      return
+    }
 
     if (downView) {
       camera.position.copy(drone.position)

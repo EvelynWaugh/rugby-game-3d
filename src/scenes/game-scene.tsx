@@ -6,11 +6,13 @@ import { FpvCamera } from '@/components/camera/fpv-camera'
 import { Drone } from '@/components/drone/drone'
 import { PlayableDrone } from '@/components/drone/drone-example'
 import { PigSoldier, RedSoldier } from '@/components/enemies/pig-soldier'
+import { BlastEffects } from '@/components/fx/blast-effects'
+import { ImpactCamera, ImpactCameraFrame } from '@/components/camera/impact-camera'
 import { Bullets } from '@/components/fx/bullets'
-import { Particles, PigSplatParts, SmokeClouds } from '@/components/fx/explosion'
+import { Particles } from '@/components/fx/explosion'
 import { RugbyBall } from '@/components/munitions/rugby-ball'
 import { ShelterMesh } from '@/components/structures/shelter'
-import { WindStreaks, BlastMarks, SectorHazards } from '@/components/fx/sector-effects'
+import { WindStreaks, SectorHazards } from '@/components/fx/sector-effects'
 import { SECTOR_COLORS } from '@/components/terrain/ground'
 import { LevelTerrain } from '@/components/terrain/level-1-outskirts'
 import { useGameLoop } from '@/hooks/use-game-loop'
@@ -55,11 +57,11 @@ function GameWorld() {
   const munitions = useGameStore((s) => s.munitions)
   const bullets = useGameStore((s) => s.bullets)
   const particles = useGameStore((s) => s.particles)
-  const smoke = useGameStore((s) => s.smoke)
-  const pigParts = useGameStore((s) => s.pigParts)
+  const impactView = useGameStore(s => s.impactView)
+  const crashed = useGameStore(s => s.aftermath?.groundCrash)
   const gameState = useGameStore((s) => s.gameState)
 
-  if (gameState !== 'playing' && gameState !== 'levelclear') return null
+  if (gameState !== 'playing' && gameState !== 'aftermath' && gameState !== 'levelclear') return null
 
   return (
     <>
@@ -71,8 +73,8 @@ function GameWorld() {
       <LevelTerrain key={level} level={level} />
       <SectorHazards />
       {level >= 2 && <WindStreaks />}
-      <BlastMarks />
-      <Drone />
+      <BlastEffects />
+      {!crashed && <Drone />}
 
       {soldiers.map((s) =>
         s.pig ? (
@@ -92,8 +94,7 @@ function GameWorld() {
 
       <Bullets bullets={bullets} />
       <Particles particles={particles} />
-      <SmokeClouds smoke={smoke} />
-      <PigSplatParts parts={pigParts} />
+      {impactView && <ImpactCamera view={impactView} />}
       <FpvCamera />
     </>
   )
@@ -101,10 +102,11 @@ function GameWorld() {
 
 export function GameScene() {
   const gameState = useGameStore((s) => s.gameState)
-  const showCanvas = gameState === 'playing' || gameState === 'levelclear'
+  const showCanvas = gameState === 'playing' || gameState === 'aftermath' || gameState === 'levelclear'
 
   return (
     <div className="absolute inset-0 bg-[#07090d]">
+      <ImpactCameraFrame />
       {showCanvas && (
         <Canvas
           dpr={[1, 1.5]}

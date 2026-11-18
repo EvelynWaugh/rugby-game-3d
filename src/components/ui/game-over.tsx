@@ -1,10 +1,11 @@
 interface GameOverProps {
+  level: number
   score: number
   victory?: boolean
   onRestart: () => void
 }
 
-export function GameOver({ score, victory = false, onRestart }: GameOverProps) {
+export function GameOver({ level, score, victory = false, onRestart }: GameOverProps) {
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
       <div className="w-full max-w-md rounded-xl border border-[#1e2733] bg-[#0a0e14] p-8 text-center shadow-2xl">
@@ -20,7 +21,7 @@ export function GameOver({ score, victory = false, onRestart }: GameOverProps) {
           onClick={onRestart}
           className="mono mt-6 rounded-lg bg-[#f39200] px-6 py-3 font-semibold text-black hover:bg-[#ffb347]"
         >
-          RESTART
+          {victory ? 'MAIN MENU' : `RETRY LEVEL ${level}`}
         </button>
       </div>
     </div>

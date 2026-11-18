@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useKeyboardInput } from '@/hooks/use-keyboard-input'
 import { useGameStore } from '@/stores/use-game-store'
-import { stepGame } from '@/systems/step-game'
+import { advanceAftermath, stepGame } from '@/systems/step-game'
 
 const TICK = 1 / 60
 
@@ -10,7 +10,13 @@ export function useGameLoop() {
   const { readInput } = useKeyboardInput()
   const remainder = useRef(0)
   useFrame((_, delta) => {
-    if (useGameStore.getState().gameState !== 'playing') {
+    const current = useGameStore.getState()
+    if (current.gameState === 'aftermath') {
+      remainder.current = 0
+      useGameStore.setState(advanceAftermath(current, delta / TICK))
+      return
+    }
+    if (current.gameState !== 'playing') {
       remainder.current = 0
       return
     }

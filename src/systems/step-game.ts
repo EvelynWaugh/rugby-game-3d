@@ -1,7 +1,9 @@
+import { MIN_ALTITUDE } from '@/constants/game'
+import { PIG_DEATH_FRAMES } from '@/constants/models'
 import { DIFFICULTIES } from '@/constants/difficulty'
 import { checkAmmoGameOver, checkWin } from '@/systems/check-win'
 import { tickSoldierDeathTimers } from '@/systems/soldier-death'
-import { checkExplosion, updateParticles, updatePigParts, updateSmoke } from '@/systems/check-explosion'
+import { checkExplosion, updateParticles } from '@/systems/check-explosion'
 import { dropMunition, updateMunitions } from '@/systems/update-munitions'
 import { computeWind, updateDrone } from '@/systems/update-drone'
 import { updateRats } from '@/systems/update-rats'
@@ -10,7 +12,7 @@ import { filterBullets, updateBullets, updateEnemyDrones } from '@/systems/updat
 import { dist3 } from '@/utils/math'
 import type { GameStoreState } from '@/stores/game-store'
 import { fellTrees } from '@/systems/terrain-layout'
-import type { GameState, InputState } from '@/types/game'
+import type { BlastMark, GameState, InputState } from '@/types/game'
 
 export function stepGame(state: GameStoreState, controls: InputState): Partial<GameStoreState> {
   if (state.gameState !== 'playing' || !state.drone || !state.levelData) return {}
@@ -39,8 +41,7 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
   }))
   let bullets = state.bullets.map((b) => ({ ...b, position: { ...b.position }, velocity: { ...b.velocity } }))
   let particles = [...state.particles]
-  let smoke = [...state.smoke]
-  let pigParts = [...state.pigParts]
+  let impactView = state.impactView && state.frame + 1 < state.impactView.untilFrame ? state.impactView : null
   let score = state.score
   let shake = state.shake
   const frame = state.frame + 1
@@ -71,10 +72,13 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
     : controls
   let fallenTrees = state.fallenTrees
   const blastMarks = state.blastMarks.filter(mark => frame - mark.frame < 600)
-  function markBlast(x: number, z: number) {
+  function detonate(x: number, z: number, kind: BlastMark['kind']) {
     if (fallenTrees === state.fallenTrees) fallenTrees = fallenTrees.slice()
     fellTrees(state.level, fallenTrees, x, z)
-    blastMarks.push({ id: `blast-${frame}-${blastMarks.length}`, frame, x, z })
+    blastMarks.push({ id: `blast-${frame}-${blastMarks.length}`, frame, kind, x, z })
+    const fx = checkExplosion({ x, z, soldiers, shelters, enemyDrones, ewTowers })
+    score += fx.scoreDelta
+    shake = Math.max(shake, fx.shake)
   }
 
   if (state.dropQueued && drone.netTicks === 0) {
@@ -91,30 +95,26 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
     difficulty: state.difficulty,
   })
 
+  if (drone.position.y <= MIN_ALTITUDE && drone.hp <= 0) {
+    drone.hp = 0
+    drone.velocity = { x: 0, y: 0, z: 0 }
+    // The crash burst is visual. A failed flight cannot earn more points.
+    blastMarks.push({ id: `crash-${frame}`, frame, kind: 'crash', x: drone.position.x, z: drone.position.z })
+    return {
+      drone, frame, blastMarks, downView: false, impactView: null, dropQueued: false,
+      gameState: 'aftermath', aftermath: { result: 'gameover', groundCrash: true, untilFrame: frame + 120 },
+    }
+  }
+
   const muniResult = updateMunitions({
     munitions,
     soldiers,
     shelters,
     wind: windResult.wind,
   })
-  smoke.push(...muniResult.smoke)
 
-  for (const impact of muniResult.impacts) {
-    markBlast(impact.groundX, impact.groundZ)
-    const fx = checkExplosion({
-      x: impact.groundX,
-      z: impact.groundZ,
-      soldiers,
-      shelters,
-      enemyDrones,
-      ewTowers,
-    })
-    score += fx.scoreDelta
-    shake = Math.max(shake, fx.shake)
-    particles.push(...fx.particles)
-    smoke.push(...fx.smoke)
-    pigParts.push(...fx.pigParts)
-  }
+  for (const impact of muniResult.impacts)
+    detonate(impact.groundX, impact.groundZ, 'munition')
 
   munitions = munitions.filter((m) => !m.done)
 
@@ -131,22 +131,10 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
   if (soldierResult.droneHit) drone.hit = soldierResult.droneHit
 
   if (soldierResult.ramKills.length > 0) {
-    const origin = soldierResult.ramKills[0].position
-    markBlast(origin.x, origin.z)
-    const fx = checkExplosion({
-      x: origin.x,
-      z: origin.z,
-      soldiers,
-      shelters,
-      enemyDrones,
-      ewTowers,
-      forceBig: true,
-    })
-    score += fx.scoreDelta
-    shake = Math.max(shake, fx.shake)
-    particles.push(...fx.particles)
-    smoke.push(...fx.smoke)
-    pigParts.push(...fx.pigParts)
+    const subject = soldierResult.ramKills[0]
+    impactView = { soldierId: subject.id, yaw: drone.yaw, untilFrame: frame + PIG_DEATH_FRAMES + 24 }
+    const origin = subject.position
+    detonate(origin.x, origin.z, 'ram')
   }
 
   const cargoNets = updateEnemyDrones({
@@ -164,8 +152,6 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
   updateRats({ shelters })
 
   particles = updateParticles(particles)
-  smoke = updateSmoke(smoke)
-  pigParts = updatePigParts(pigParts)
 
   if (shake > 0) shake *= 0.85
 
@@ -197,6 +183,12 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
     }
   }
 
+  // Let the last fall or blast finish before a result screen covers the scene.
+  const untilFrame = impactView?.untilFrame ?? (muniResult.impacts.length ? frame + 72 : frame)
+  const aftermath = gameState !== 'playing' && untilFrame > frame
+    ? { result: gameState, untilFrame, groundCrash: false }
+    : null
+
   return {
     cargoNets,
     fallenTrees,
@@ -209,8 +201,8 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
     munitions,
     bullets,
     particles,
-    smoke,
-    pigParts,
+    impactView,
+    aftermath,
     score,
     shake,
     frame,
@@ -220,6 +212,14 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
     inputInverted,
     inputDelay,
     dropQueued: false,
-    gameState,
+    gameState: aftermath ? 'aftermath' : gameState,
   }
+}
+
+export function advanceAftermath(state: GameStoreState, elapsedTicks: number): Partial<GameStoreState> {
+  if (!state.aftermath) return {}
+  const frame = Math.min(state.frame + elapsedTicks, state.aftermath.untilFrame)
+  if (frame >= state.aftermath.untilFrame)
+    return { frame, gameState: state.aftermath.result, aftermath: null, impactView: null, shake: 0 }
+  return { frame, shake: 0 }
 }

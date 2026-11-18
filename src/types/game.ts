@@ -1,4 +1,4 @@
-export type GameState = 'start' | 'difficulty' | 'playing' | 'levelclear' | 'gameover' | 'victory'
+export type GameState = 'start' | 'difficulty' | 'playing' | 'aftermath' | 'levelclear' | 'gameover' | 'victory'
 
 export type DifficultyKey = 'low' | 'medium' | 'high'
 
@@ -131,7 +131,20 @@ export interface CargoNet {
   ticks: number
 }
 
+export interface ImpactView {
+  soldierId: string
+  yaw: number
+  untilFrame: number
+}
+
+export interface Aftermath {
+  result: 'gameover' | 'levelclear' | 'victory'
+  groundCrash: boolean
+  untilFrame: number
+}
+
 export interface BlastMark {
+  kind: 'munition' | 'ram' | 'crash'
   id: string
   x: number
   z: number
@@ -178,26 +191,6 @@ export interface Particle {
   max: number
   color: string
   r: number
-}
-
-export interface Smoke {
-  id: string
-  position: Vec3
-  velocity: Vec3
-  life: number
-  max: number
-  r: number
-}
-
-export interface PigPart {
-  id: string
-  position: Vec3
-  velocity: Vec3
-  rot: number
-  spin: number
-  life: number
-  max: number
-  type: 'body' | 'head'
 }
 
 export interface Wind {

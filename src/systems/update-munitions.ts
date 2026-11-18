@@ -1,7 +1,7 @@
 import { MUNITION_FALL_RATE, MUNITION_FALL_RATE_BIG } from '@/constants/game'
 import { findShelterProximityDetonation } from '@/systems/combat-hit'
 import { droneForwardVector } from '@/systems/update-drone'
-import type { Drone, Munition, Shelter, Smoke, Soldier, Wind } from '@/types/game'
+import type { Drone, Munition, Shelter, Soldier, Wind } from '@/types/game'
 import { rand, uid } from '@/utils/math'
 import * as THREE from 'three'
 
@@ -50,8 +50,7 @@ export function updateMunitions({
   soldiers: Soldier[]
   shelters: Shelter[]
   wind: Wind
-}): { smoke: Smoke[]; impacts: Munition[] } {
-  const smoke: Smoke[] = []
+}): { impacts: Munition[] } {
   const impacts: Munition[] = []
 
   for (const m of munitions) {
@@ -81,5 +80,5 @@ export function updateMunitions({
     }
   }
 
-  return { smoke, impacts }
+  return { impacts }
 }

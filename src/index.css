@@ -64,3 +64,21 @@ body {
 .flight-instruments {
   background: linear-gradient(transparent, rgb(12 19 23 / 88%) 42%);
 }
+
+.impact-camera-frame {
+  position: absolute;
+  z-index: 11;
+  outline: 2px solid #efb157;
+  box-shadow: 0 2px 12px #10151988;
+  pointer-events: none;
+}
+.impact-camera-frame span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 3px 7px;
+  color: #f8d799;
+  background: #151b1deb;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
