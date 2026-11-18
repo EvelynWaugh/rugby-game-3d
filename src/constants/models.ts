@@ -72,10 +72,12 @@ export const BALL_MODEL: ModelFitConfig = {
 }
 
 export const WEAPON_AK: ModelFitConfig & {
+  muzzle: [number, number, number]
   attach: { position: [number, number, number]; rotation: [number, number, number]; scale: number }
 } = {
   path: '/models/weapon/ak/ak.glb',
   targetSize: 1.48,
+  muzzle: [-0.74, 0.124, 0.016],
   attach: {
     position: [0.02, 0.05, 0.08],
     rotation: [0, 0, -Math.PI * 0.5],
@@ -136,6 +138,9 @@ export const HAZARD_MODELS = {
   drone: { path: '/models/soviet-drone/soviet-drone.glb', targetSize: 1.6 },
   net: { path: '/models/soviet-drone/cargo-net.glb', targetSize: 1.8 },
 } as const satisfies Record<string, ModelFitConfig>
+
+/** Muzzle on the grounded, size-fitted patrol GLB. The mounted gun faces local -X. */
+export const PATROL_MUZZLE: [number, number, number] = [-0.685, 1.48, -0.04]
 
 export const ALL_MODEL_PATHS = [
   DRONE_MODEL.path,

@@ -82,6 +82,7 @@ export interface Soldier {
   catcher: boolean
   weaponDropped: boolean
   shootTimer: number
+  lastShotFrame?: number
   fireCool: number
   catchTimer: number
   jamOff: number

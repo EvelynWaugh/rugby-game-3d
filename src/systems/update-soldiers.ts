@@ -143,12 +143,14 @@ export function updateSoldiers({
   munitions,
   difficulty,
   ewActive,
+  frame,
 }: {
   soldiers: Soldier[]
   drone: Drone
   munitions: Munition[]
   difficulty: keyof typeof DIFFICULTIES
   ewActive: boolean
+  frame: number
 }): SoldierUpdateResult {
   const ds = DIFFICULTIES[difficulty]
   const bullets: Bullet[] = []
@@ -259,6 +261,7 @@ export function updateSoldiers({
     if (isWeaponFiring(s) && inShootRange && (s.fireCool ?? 0) <= 0) {
       s.fireCool = PIG_FIRE_INTERVAL
       bullets.push(spawnPigBullet(s, drone))
+      s.lastShotFrame = frame
     }
   }
 

@@ -119,6 +119,7 @@ export function stepGame(state: GameStoreState, controls: InputState): Partial<G
   munitions = munitions.filter((m) => !m.done)
 
   const soldierResult = updateSoldiers({
+    frame,
     soldiers,
     drone,
     munitions,

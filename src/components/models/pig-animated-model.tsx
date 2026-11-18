@@ -6,7 +6,8 @@ import * as THREE from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
 import { WeaponAk } from '@/components/models/weapon-ak'
-import { PIG_CLIPS, PIG_MODEL, type PigAnimKey } from '@/constants/models'
+import { useGameStore } from '@/stores/use-game-store'
+import { PIG_CLIPS, PIG_MODEL, WEAPON_AK, type PigAnimKey } from '@/constants/models'
 import { enableShadows, fitSkinnedToHeight, fixSkinnedMaterials } from '@/utils/model-fit'
 
 useGLTF.preload(PIG_MODEL.path)
@@ -14,11 +15,16 @@ useGLTF.preload(PIG_MODEL.path)
 const handWorldPos = new THREE.Vector3()
 const handWorldQuat = new THREE.Quaternion()
 const parentWorldQuat = new THREE.Quaternion()
+const barrelInHand = new THREE.Vector3(-1, 0, 0).applyEuler(new THREE.Euler(...WEAPON_AK.attach.rotation))
+const barrelWorld = new THREE.Vector3()
+const sightLine = new THREE.Vector3()
+const barrelTurn = new THREE.Quaternion()
 
 interface PigAnimatedModelProps {
   animKey: PigAnimKey
   speed?: number
   showWeapon?: boolean
+  firedAt?: number
   rotation?: [number, number, number]
   fallback?: React.ReactNode
 }
@@ -31,6 +37,7 @@ function PigAnimatedModelInner({
   animKey,
   speed = 1,
   showWeapon = false,
+  firedAt,
   rotation = [0, 0, 0],
 }: Omit<PigAnimatedModelProps, 'fallback'>) {
   const cloneRef = useRef<Object3D>(null)
@@ -85,6 +92,13 @@ function PigAnimatedModelInner({
     rightHand.updateWorldMatrix(true, false)
     rightHand.getWorldPosition(handWorldPos)
     rightHand.getWorldQuaternion(handWorldQuat)
+    const drone = useGameStore.getState().drone
+    if (drone) {
+      // Keep the animated grip and roll while turning the fitted rifle toward the drone.
+      barrelWorld.copy(barrelInHand).applyQuaternion(handWorldQuat)
+      sightLine.copy(drone.position).sub(handWorldPos).normalize()
+      handWorldQuat.premultiply(barrelTurn.setFromUnitVectors(barrelWorld, sightLine))
+    }
     root.updateWorldMatrix(true, false)
     root.worldToLocal(handWorldPos)
     root.getWorldQuaternion(parentWorldQuat)
@@ -99,7 +113,7 @@ function PigAnimatedModelInner({
         <primitive ref={cloneRef} object={clone} position={fit.position} />
       </group>
       <group ref={weaponRef} visible={showWeapon}>
-        <WeaponAk />
+        <WeaponAk firedAt={firedAt} />
       </group>
     </group>
   )

@@ -1,9 +1,10 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
+import { MuzzleFlash } from '@/components/fx/muzzle-flash'
 import { PigAnimatedModel } from '@/components/models/pig-animated-model'
 import { StaticModel } from '@/components/models/static-model'
-import { HAZARD_MODELS, type PigAnimKey } from '@/constants/models'
+import { HAZARD_MODELS, PATROL_MUZZLE, type PigAnimKey } from '@/constants/models'
 import type { Soldier } from '@/types/game'
 import { useGameStore } from '@/stores/use-game-store'
 
@@ -86,10 +87,18 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
   return (
     <group ref={groupRef}>
       {soldier.patrol ? (
-        <StaticModel {...HAZARD_MODELS.patrol} ground rotation={[0, 0, soldier.dead ? Math.PI / 2 : 0]} />
+        <group rotation={[0, Math.PI / 2, 0]}>
+          <StaticModel {...HAZARD_MODELS.patrol} ground rotation={[0, 0, soldier.dead ? Math.PI / 2 : 0]} />
+          {!soldier.dead && (
+            <group position={PATROL_MUZZLE} rotation={[0, -Math.PI / 2, 0]}>
+              <MuzzleFlash firedAt={soldier.lastShotFrame} />
+            </group>
+          )}
+        </group>
       ) : (
         <PigAnimatedModel
           animKey={animKey}
+          firedAt={soldier.lastShotFrame}
           showWeapon={showWeapon(soldier, animKey)}
           fallback={<PlaceholderPig tint={tint} />}
         />
