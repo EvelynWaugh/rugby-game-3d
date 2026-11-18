@@ -1,5 +1,6 @@
 node_modules
 dist
+release
 .DS_Store
 *.local
 # GLB binaries stay local (large) — paths listed in public/models/MANIFEST.md

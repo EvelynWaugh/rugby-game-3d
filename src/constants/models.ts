@@ -1,3 +1,5 @@
+import { publicUrl } from '@/lib/public-url'
+
 /** Central registry for all 3D assets — paths, scale, animation, attach offsets */
 
 export interface ModelFitConfig {
@@ -17,7 +19,7 @@ export interface PigClipConfig {
 export const PIG_TARGET_HEIGHT = 1.65
 
 export const PIG_MODEL = {
-  path: '/models/pig/pig.glb',
+  path: publicUrl('/models/pig/pig.glb'),
   targetHeight: PIG_TARGET_HEIGHT,
 } as const
 
@@ -48,7 +50,7 @@ export const PIG_CATCH_FRAMES = 162
  * Visual yaw is applied in drone.tsx (rotation.y = −drone.yaw) — do not add a yaw flip here.
  */
 export const DRONE_MODEL: ModelFitConfig = {
-  path: '/models/drone/drone.glb',
+  path: publicUrl('/models/drone/drone.glb'),
   targetSize: 0.42,
   scale: 1,
   rotation: [0, Math.PI, 0],
@@ -65,7 +67,7 @@ export function isDronePropellerNode(name: string) {
 }
 
 export const BALL_MODEL: ModelFitConfig = {
-  path: '/models/ball/ball.glb',
+  path: publicUrl('/models/ball/ball.glb'),
   targetSize: 0.38,
   scale: 1,
   rotation: [0, 0, 0],
@@ -75,7 +77,7 @@ export const WEAPON_AK: ModelFitConfig & {
   muzzle: [number, number, number]
   attach: { position: [number, number, number]; rotation: [number, number, number]; scale: number }
 } = {
-  path: '/models/weapon/ak/ak.glb',
+  path: publicUrl('/models/weapon/ak/ak.glb'),
   targetSize: 1.48,
   muzzle: [-0.74, 0.124, 0.016],
   attach: {
@@ -89,7 +91,7 @@ export const WEAPON_AK: ModelFitConfig & {
 const SHELTER_RAW = { x: 1.8987, y: 0.6774, z: 1.8333 }
 
 export const SHELTER_MODEL: ModelFitConfig = {
-  path: '/models/shelter/shelter.glb',
+  path: publicUrl('/models/shelter/shelter.glb'),
   targetSize: 10,
 }
 
@@ -109,7 +111,7 @@ export const SHELTER_INTERIOR_RATIO = 0.55
 export const RAT_TARGET_HEIGHT = 0.5
 
 export const RAT_MODEL = {
-  path: '/models/rat/rat.glb',
+  path: publicUrl('/models/rat/rat.glb'),
   targetHeight: RAT_TARGET_HEIGHT,
 } as const
 
@@ -121,22 +123,22 @@ export const RAT_CLIPS = {
 export type RatAnimKey = keyof typeof RAT_CLIPS
 
 export const ENV_MODELS = {
-  greenTree: { path: '/models/trees/green-tree.glb', targetSize: 8.5 },
-  fallenTree: { path: '/models/trees/fallen-tree.glb', targetSize: 5.5 },
-  fallenTree2: { path: '/models/trees/fallen-tree-2.glb', targetSize: 4.5 },
-  fallenTree3: { path: '/models/trees/fallen-tree-3.glb', targetSize: 6 },
-  crate: { path: '/models/crate/crate.glb', targetSize: 1.35 },
-  granit: { path: '/models/granit/granit.glb', targetSize: 2.1 },
-  dirt: { path: '/models/dirt/dirt.glb', targetSize: 4.2 },
-  wall: { path: '/models/damaged-wall/wall.glb', targetSize: 7 },
-  terrain: { path: '/models/terrain/terrain.glb', targetSize: 16 },
+  greenTree: { path: publicUrl('/models/trees/green-tree.glb'), targetSize: 8.5 },
+  fallenTree: { path: publicUrl('/models/trees/fallen-tree.glb'), targetSize: 5.5 },
+  fallenTree2: { path: publicUrl('/models/trees/fallen-tree-2.glb'), targetSize: 4.5 },
+  fallenTree3: { path: publicUrl('/models/trees/fallen-tree-3.glb'), targetSize: 6 },
+  crate: { path: publicUrl('/models/crate/crate.glb'), targetSize: 1.35 },
+  granit: { path: publicUrl('/models/granit/granit.glb'), targetSize: 2.1 },
+  dirt: { path: publicUrl('/models/dirt/dirt.glb'), targetSize: 4.2 },
+  wall: { path: publicUrl('/models/damaged-wall/wall.glb'), targetSize: 7 },
+  terrain: { path: publicUrl('/models/terrain/terrain.glb'), targetSize: 16 },
 } as const satisfies Record<string, ModelFitConfig>
 
 export const HAZARD_MODELS = {
-  patrol: { path: '/models/warpigpatrol/warpigpatrol.glb', targetSize: 3.2 },
-  jammer: { path: '/models/ewjammer/ewjammer.glb', targetSize: 5 },
-  drone: { path: '/models/soviet-drone/soviet-drone.glb', targetSize: 1.6 },
-  net: { path: '/models/soviet-drone/cargo-net.glb', targetSize: 1.8 },
+  patrol: { path: publicUrl('/models/warpigpatrol/warpigpatrol.glb'), targetSize: 3.2 },
+  jammer: { path: publicUrl('/models/ewjammer/ewjammer.glb'), targetSize: 5 },
+  drone: { path: publicUrl('/models/soviet-drone/soviet-drone.glb'), targetSize: 1.6 },
+  net: { path: publicUrl('/models/soviet-drone/cargo-net.glb'), targetSize: 1.8 },
 } as const satisfies Record<string, ModelFitConfig>
 
 /** Muzzle on the grounded, size-fitted patrol GLB. The mounted gun faces local -X. */

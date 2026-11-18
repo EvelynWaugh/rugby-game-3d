@@ -15,6 +15,7 @@ import { ShelterMesh } from '@/components/structures/shelter'
 import { WindStreaks, SectorHazards } from '@/components/fx/sector-effects'
 import { SECTOR_COLORS } from '@/components/terrain/ground'
 import { LevelTerrain } from '@/components/terrain/level-1-outskirts'
+import { DRONE_MODEL } from '@/constants/models'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { useGameStore } from '@/stores/use-game-store'
 
@@ -138,7 +139,7 @@ export function GameScene() {
 // }
 
 // Pre-load the GLTF file to avoid pop-in
-useGLTF.preload('/models/drone/drone.glb');
+useGLTF.preload(DRONE_MODEL.path);
 
 export function GameSceneExample() {
   return (
@@ -160,7 +161,7 @@ export function GameSceneExample() {
 
         {/* Suspense is required when using useGLTF */}
         <Suspense fallback={null}>
-          <PlayableDrone url="/models/drone/drone.glb" />
+          <PlayableDrone url={DRONE_MODEL.path} />
         </Suspense>
 
         {/* Camera Controls */}

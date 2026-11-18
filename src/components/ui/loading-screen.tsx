@@ -1,3 +1,7 @@
+import { publicUrl } from '@/lib/public-url'
+
+const chevronSrc = publicUrl('/assets/img/shevron_gold.svg')
+
 interface LoadingScreenProps {
   progress: number
   loaded: number
@@ -19,7 +23,7 @@ export function LoadingScreen({
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#07090d]">
       <div className="w-full max-w-md rounded-xl border border-[#1e2733] bg-[#0a0e14] p-8 text-center shadow-2xl">
         <img
-          src="/assets/img/shevron_gold.svg"
+          src={chevronSrc}
           alt=""
           className="mx-auto mb-4 h-20 opacity-80"
         />

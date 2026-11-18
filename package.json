@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "wordpress": "node scripts/package-wordpress.mjs"
   },
   "dependencies": {
     "@nextui-org/react": "^2.6.11",

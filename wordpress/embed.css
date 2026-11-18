@@ -1,0 +1,24 @@
+body.rugby-game-active {
+  overflow: hidden;
+}
+
+body.rugby-game-active #root {
+  position: fixed;
+  z-index: 99990;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: auto;
+  margin: 0;
+}
+
+body.admin-bar.rugby-game-active #root {
+  top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+  body.admin-bar.rugby-game-active #root {
+    top: 46px;
+  }
+}
