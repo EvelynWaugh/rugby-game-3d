@@ -28,6 +28,16 @@ pnpm dev
 | D / → | Turn right |
 | R / F | Altitude up / down |
 | Space | Drop munition |
+| V | Toggle overhead camera and crosshair |
+
+## Campaign
+
+The drone makes a short entrance and then hovers in calm air. Flight input ends the entrance immediately. Ground contact ends the run.
+
+1. **Outskirts** introduces flight and ball drops.
+2. **Windy Valley** adds armed patrols and crosswinds.
+3. **Iron City** adds signal jammers.
+4. **The Dead Zone** adds drones carrying cargo nets. A net holds the player for three seconds.
 
 ## Architecture
 

@@ -27,6 +27,7 @@ export interface LevelConfig {
   wind: boolean
   drones: number
   ew: number
+  patrols: number
   soldiers: number
   reds: number
   shelters: number
@@ -56,7 +57,8 @@ export interface Drone {
   altitudeVel: number
   yaw: number
   yawVel: number
-  grounded: number
+  entranceTicks: number
+  netTicks: number
 }
 
 export type PigBehavior = 'biped' | 'flee' | 'aim' | 'shoot' | 'catch'
@@ -71,6 +73,7 @@ export interface Soldier {
   maxhp: number
   cool: number
   dead: boolean
+  patrol: boolean
   pig: boolean
   immune: boolean
   visible: boolean
@@ -119,6 +122,20 @@ export interface EnemyDrone {
   immune: boolean
   visible: boolean
   jamOff: number
+}
+
+export interface CargoNet {
+  id: string
+  position: Vec3
+  velocity: Vec3
+  ticks: number
+}
+
+export interface BlastMark {
+  id: string
+  x: number
+  z: number
+  frame: number
 }
 
 export interface EwTower {

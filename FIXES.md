@@ -33,6 +33,10 @@ You have access to blender and meshy. I have in public/models as well that are c
 - Appears from level 4
 - Its weapon is cargo net (cargo-net.glb model in same folder) underneath which he throw into our drone and becocme our drone stopped and slowly fall down. It lasts for 3 seconds
 
+## Style
+- I think you can find scene very poor, so you might want to improve this side as well.
+
+## Update .agents/rules if needed
 
 
 

@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { DRONE_MAX_SPEED } from '@/constants/game'
@@ -20,15 +19,22 @@ const LOOK_AT_DROP = 0.28
 export function FpvCamera() {
   const { camera } = useThree()
   const shake = useGameStore((s) => s.shake)
-  const smoothedPos = useRef(new THREE.Vector3())
 
   useFrame(() => {
-    const drone = useGameStore.getState().drone
+    const { drone, downView } = useGameStore.getState()
     if (!drone) return
 
-    camera.near = 0.05
-
     droneForwardVector(drone.yaw, forward)
+
+    if (downView) {
+      camera.position.copy(drone.position)
+      camera.position.y = Math.max(0.12, drone.position.y - 0.23)
+      camera.up.copy(forward)
+      lookTarget.copy(camera.position)
+      lookTarget.y -= 1
+      camera.lookAt(lookTarget)
+      return
+    }
 
     const horizSpeed = Math.hypot(drone.velocity.x, drone.velocity.z)
     const speedT = Math.min(horizSpeed / DRONE_MAX_SPEED, 1)
@@ -40,17 +46,19 @@ export function FpvCamera() {
     desiredPos
       .copy(drone.position)
       .addScaledVector(forward, -CAM_BEHIND)
-      .add(new THREE.Vector3(shakeX, CAM_ABOVE + shakeY, 0))
 
-    smoothedPos.current.lerp(desiredPos, 0.72)
-    camera.position.copy(smoothedPos.current)
+    desiredPos.x += shakeX
+    desiredPos.y += CAM_ABOVE + shakeY
+
+    camera.position.copy(desiredPos)
 
     const lookDrop = LOOK_AT_DROP * (1 - speedT * 0.85)
 
     lookTarget
       .copy(drone.position)
       .addScaledVector(forward, lookAhead)
-      .add(new THREE.Vector3(0, -lookDrop, 0))
+
+    lookTarget.y -= lookDrop
 
     camera.up.copy(worldUp)
     camera.lookAt(lookTarget)

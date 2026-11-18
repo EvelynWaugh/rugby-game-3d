@@ -4,6 +4,7 @@ import type { DeathVariant, Soldier } from '@/types/game'
 export function markSoldierDead(soldier: Soldier, variant: DeathVariant) {
   if (soldier.dead) return
   soldier.dead = true
+  soldier.visible = true
   soldier.deathVariant = variant
   soldier.deathTimer = PIG_DEATH_FRAMES
   soldier.behavior = 'biped'

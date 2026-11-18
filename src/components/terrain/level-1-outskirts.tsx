@@ -1,73 +1,33 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { StaticModel } from '@/components/models/static-model'
 import { ENV_MODELS } from '@/constants/models'
+import { getStandingTrees, scatterAlongPath } from '@/systems/terrain-layout'
+import { useGameStore } from '@/stores/use-game-store'
+import { makeSurfaceTexture } from './surface-texture'
+import { Ground } from './ground'
 import { getLevelPath } from '@/systems/path-system'
 
 for (const model of Object.values(ENV_MODELS)) {
   useGLTF.preload(model.path)
 }
 
-function hash01(index: number, salt: number) {
-  const x = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453
-  return x - Math.floor(x)
-}
+const fallenVariants = [ENV_MODELS.fallenTree, ENV_MODELS.fallenTree2, ENV_MODELS.fallenTree3]
 
-interface ScatterSpec {
-  count: number
-  sideMin: number
-  sideMax: number
-  t0?: number
-  t1?: number
-  scaleJitter?: number
-  y?: number
-}
+export function LevelTerrain({ level }: { level: number }) {
+  const fallen = useGameStore(s => s.fallenTrees)
+  const curve = useMemo(() => getLevelPath(level), [level])
 
-function scatterAlongPath({
-  curve,
-  spec,
-  salt,
-}: {
-  curve: THREE.CatmullRomCurve3
-  spec: ScatterSpec
-  salt: number
-}) {
-  const t0 = spec.t0 ?? 0.05
-  const t1 = spec.t1 ?? 0.98
-  const up = new THREE.Vector3(0, 1, 0)
-  const items: { position: [number, number, number]; rotation: [number, number, number]; scale: number }[] = []
-
-  for (let i = 0; i < spec.count; i++) {
-    const t = t0 + ((i + 0.35) / Math.max(spec.count, 1)) * (t1 - t0)
-    const u = hash01(i, salt)
-    const side = i % 2 === 0 ? -1 : 1
-    const lateral = side * (spec.sideMin + u * (spec.sideMax - spec.sideMin))
-    const point = curve.getPointAt(Math.min(Math.max(t, 0), 1))
-    const tangent = curve.getTangentAt(Math.min(Math.max(t, 0), 1)).normalize()
-    const right = new THREE.Vector3().crossVectors(tangent, up).normalize()
-    if (right.lengthSq() < 0.001) right.set(1, 0, 0)
-    const pos = point.clone().addScaledVector(right, lateral)
-    const yaw = hash01(i, salt + 3) * Math.PI * 2
-    const scale = 1 + (hash01(i, salt + 9) - 0.5) * (spec.scaleJitter ?? 0)
-    items.push({
-      position: [pos.x, spec.y ?? 0, pos.z],
-      rotation: [0, yaw, 0],
-      scale,
-    })
-  }
-
-  return items
-}
-
-export function Level1Outskirts() {
-  const curve = useMemo(() => getLevelPath(1), [])
-
+  const roadTexture = useMemo(() => makeSurfaceTexture(true, level >= 3), [level])
+  useEffect(() => () => roadTexture.dispose(), [roadTexture])
   const roadGeometry = useMemo(() => {
     const segments = 200
     const width = 8
     const vertices: number[] = []
     const indices: number[] = []
+    const uvs: number[] = []
+    const repeats = curve.getLength() / 8
 
     for (let i = 0; i <= segments; i++) {
       const t = i / segments
@@ -78,6 +38,7 @@ export function Level1Outskirts() {
       const left = point.clone().addScaledVector(right, -width / 2)
       const rightPt = point.clone().addScaledVector(right, width / 2)
 
+      uvs.push(0, t * repeats, 1, t * repeats)
       vertices.push(left.x, 0.02, left.z)
       vertices.push(rightPt.x, 0.02, rightPt.z)
 
@@ -90,15 +51,13 @@ export function Level1Outskirts() {
 
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
     geo.setIndex(indices)
     geo.computeVertexNormals()
     return geo
   }, [curve])
 
-  const greenTrees = useMemo(
-    () => scatterAlongPath({ curve, spec: { count: 16, sideMin: 11, sideMax: 20, scaleJitter: 0.45 }, salt: 1 }),
-    [curve],
-  )
+  const greenTrees = useMemo(() => getStandingTrees(level), [level])
   const fallenTrees = useMemo(
     () => scatterAlongPath({ curve, spec: { count: 5, sideMin: 8, sideMax: 14, scaleJitter: 0.25, t0: 0.12, t1: 0.9 }, salt: 2 }),
     [curve],
@@ -134,25 +93,17 @@ export function Level1Outskirts() {
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, -240]} receiveShadow>
-        <planeGeometry args={[200, 600]} />
-        <meshStandardMaterial color="#2d5a27" />
-      </mesh>
+      <Ground level={level} />
 
       <mesh geometry={roadGeometry} receiveShadow>
-        <meshStandardMaterial color="#3a3a3a" roughness={0.9} />
+        <meshStandardMaterial map={roadTexture} roughness={1} />
       </mesh>
 
       {terrainPatches.map((p, i) => (
-        <StaticModel
-          key={`terrain-${i}`}
-          path={ENV_MODELS.terrain.path}
-          targetSize={ENV_MODELS.terrain.targetSize}
-          position={p.position}
-          rotation={p.rotation}
-          scale={p.scale}
-          ground
-        />
+        <group key={`terrain-${i}`} position={[p.position[0], -0.4, p.position[2]]}
+          rotation={p.rotation} scale={[p.scale, 0.15, p.scale]}>
+          <StaticModel {...ENV_MODELS.terrain} ground />
+        </group>
       ))}
       {dirtMounds.map((p, i) => (
         <StaticModel
@@ -165,17 +116,19 @@ export function Level1Outskirts() {
           ground
         />
       ))}
-      {greenTrees.map((p, i) => (
-        <StaticModel
-          key={`tree-${i}`}
-          path={ENV_MODELS.greenTree.path}
-          targetSize={ENV_MODELS.greenTree.targetSize}
-          position={p.position}
-          rotation={p.rotation}
-          scale={p.scale}
-          ground
-        />
-      ))}
+      {greenTrees.map((p, i) => {
+        const model = fallen.includes(i) ? fallenVariants[i % fallenVariants.length] : ENV_MODELS.greenTree
+        return (
+          <StaticModel
+            key={`tree-${i}`}
+            {...model}
+            position={p.position}
+            rotation={p.rotation}
+            scale={p.scale}
+            ground
+          />
+        )
+      })}
       {fallenTrees.map((p, i) => (
         <StaticModel
           key={`fall-${i}`}
@@ -243,10 +196,7 @@ export function Level1Outskirts() {
         />
       ))}
 
-      <mesh position={[0, -0.5, -250]} receiveShadow>
-        <boxGeometry args={[300, 1, 600]} />
-        <meshStandardMaterial color="#1a3a1a" />
-      </mesh>
+
     </group>
   )
 }

@@ -12,7 +12,7 @@ export interface PathSample {
 
 const levelPaths = new Map<number, THREE.CatmullRomCurve3>()
 
-function createOutskirtsPath(): THREE.CatmullRomCurve3 {
+function createSectorPath(level: number): THREE.CatmullRomCurve3 {
   const points = [
     new THREE.Vector3(0, 0, 0),
     new THREE.Vector3(15, 2, -80),
@@ -22,6 +22,11 @@ function createOutskirtsPath(): THREE.CatmullRomCurve3 {
     new THREE.Vector3(30, 2, -400),
     new THREE.Vector3(0, 0, -480),
   ]
+  for (const [i, point] of points.entries()) {
+    point.y = 0
+    if (level > 1) point.x = Math.sin(i * 1.7 + level) * (14 + level * 4)
+    point.z *= 0.58 + level * 0.06
+  }
   return new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5)
 }
 
@@ -29,7 +34,7 @@ export function getLevelPath(levelId: number): THREE.CatmullRomCurve3 {
   const cached = levelPaths.get(levelId)
   if (cached) return cached
 
-  const curve = createOutskirtsPath()
+  const curve = createSectorPath(levelId)
   levelPaths.set(levelId, curve)
   return curve
 }

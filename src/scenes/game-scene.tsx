@@ -1,5 +1,6 @@
-import { Suspense } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Suspense, useRef } from 'react'
+import { DirectionalLight, Object3D } from 'three'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Sky, useGLTF, OrbitControls, Grid } from '@react-three/drei'
 import { FpvCamera } from '@/components/camera/fpv-camera'
 import { Drone } from '@/components/drone/drone'
@@ -9,18 +10,34 @@ import { Bullets } from '@/components/fx/bullets'
 import { Particles, PigSplatParts, SmokeClouds } from '@/components/fx/explosion'
 import { RugbyBall } from '@/components/munitions/rugby-ball'
 import { ShelterMesh } from '@/components/structures/shelter'
-import { Level1Outskirts } from '@/components/terrain/level-1-outskirts'
+import { WindStreaks, BlastMarks, SectorHazards } from '@/components/fx/sector-effects'
+import { SECTOR_COLORS } from '@/components/terrain/ground'
+import { LevelTerrain } from '@/components/terrain/level-1-outskirts'
 import { useGameLoop } from '@/hooks/use-game-loop'
 import { useGameStore } from '@/stores/use-game-store'
 
-function SceneLights() {
+function SceneLights({ sun }: { sun: string }) {
+  const light = useRef<DirectionalLight>(null)
+  const target = useRef<Object3D>(null)
+  useFrame(() => {
+    const pos = useGameStore.getState().drone?.position
+    if (!pos || !light.current || !target.current) return
+    target.current.position.set(pos.x, 0, pos.z)
+    light.current.target = target.current
+    light.current.position.set(pos.x - 25, 36, pos.z + 18)
+  })
   return (
     <>
+      <object3D ref={target} />
       <hemisphereLight args={['#87ceeb', '#2d5a27', 0.6]} />
       <ambientLight intensity={0.45} />
-      <directionalLight
+      <directionalLight ref={light}
+        shadow-camera-left={-34} shadow-camera-right={34}
+        shadow-camera-top={34} shadow-camera-bottom={-34}
+        shadow-normalBias={0.035}
         castShadow
-        intensity={1.4}
+        intensity={1.7}
+        color={sun}
         position={[30, 60, 20]}
         shadow-mapSize={[1024, 1024]}
       />
@@ -31,6 +48,8 @@ function SceneLights() {
 function GameWorld() {
   useGameLoop()
 
+  const level = useGameStore(s => s.level)
+  const palette = SECTOR_COLORS[level - 1]
   const soldiers = useGameStore((s) => s.soldiers)
   const shelters = useGameStore((s) => s.shelters)
   const munitions = useGameStore((s) => s.munitions)
@@ -44,12 +63,15 @@ function GameWorld() {
 
   return (
     <>
-      <color attach="background" args={['#6eb5e8']} />
-      <Sky sunPosition={[100, 40, 100]} turbidity={2} rayleigh={1.5} />
-      <SceneLights />
-      <fog attach="fog" args={['#87ceeb', 50, 220]} />
+      <color attach="background" args={[palette.haze]} />
+      <Sky sunPosition={[-110, 52 - level * 5, 75]} turbidity={4} rayleigh={1.15} />
+      <SceneLights sun={palette.sun} />
+      <fog attach="fog" args={[palette.haze, 40, 225]} />
 
-      <Level1Outskirts />
+      <LevelTerrain key={level} level={level} />
+      <SectorHazards />
+      {level >= 2 && <WindStreaks />}
+      <BlastMarks />
       <Drone />
 
       {soldiers.map((s) =>
@@ -85,8 +107,9 @@ export function GameScene() {
     <div className="absolute inset-0 bg-[#07090d]">
       {showCanvas && (
         <Canvas
+          dpr={[1, 1.5]}
           shadows
-          camera={{ fov: 75, near: 0.1, far: 600, position: [0, 12, 8] }}
+          camera={{ fov: 75, near: 0.05, far: 600, position: [0, 12, 8] }}
           gl={{ antialias: true, alpha: false }}
         >
           <Suspense fallback={null}>

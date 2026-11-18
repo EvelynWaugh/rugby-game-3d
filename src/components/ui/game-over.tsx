@@ -12,7 +12,7 @@ export function GameOver({ score, victory = false, onRestart }: GameOverProps) {
           {victory ? 'VICTORY' : 'GAME OVER'}
         </p>
         <h2 className="mt-2 text-2xl font-bold text-white">
-          {victory ? 'SWINE OVERLORD DEFEATED' : 'DRONE LOST'}
+          {victory ? 'ALL SECTORS CLEAR' : 'DRONE LOST'}
         </h2>
         <p className="mono mt-4 text-lg text-slate-300">FINAL SCORE: {score}</p>
         <button

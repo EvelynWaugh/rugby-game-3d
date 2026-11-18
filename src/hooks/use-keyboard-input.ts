@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { InputState } from '@/types/game'
 
-const keys: Record<string, boolean> = {}
+
 
 export function useKeyboardInput() {
+  const keys = useRef<Record<string, boolean>>({}).current
   const inputRef = useRef<InputState>({
     forward: 0,
     lateral: 0,
@@ -38,13 +39,19 @@ export function useKeyboardInput() {
       if (e.key === 'PageDown') keys.pagedown = false
     }
 
+    function clearKeys() {
+      for (const key of Object.keys(keys)) delete keys[key]
+    }
+    window.addEventListener('blur', clearKeys)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     return () => {
+      clearKeys()
+      window.removeEventListener('blur', clearKeys)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [])
+  }, [keys])
 
   function readInput({ inverted }: { inverted: boolean }) {
     let forward = 0

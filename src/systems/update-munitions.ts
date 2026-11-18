@@ -15,7 +15,7 @@ export function dropMunition(drone: Drone): Munition | null {
   else drone.munitions--
 
   const inherit = isBigBall ? 0.55 : 0.4
-  const dropHeight = Math.max(drone.position.y, 6)
+  const dropHeight = Math.max(drone.position.y - 0.12, 0.1)
 
   const fwd = droneForwardVector(drone.yaw, dropForward)
   const spawnX = drone.position.x - fwd.x * 0.14
@@ -59,13 +59,13 @@ export function updateMunitions({
 
     const dropHeight = m.dropHeight || 12
     m.alt -= m.isBigBall ? MUNITION_FALL_RATE_BIG : MUNITION_FALL_RATE
-    m.velocity.x += wind.x * 0.04
-    m.velocity.z += wind.z * 0.02
+    m.velocity.x += wind.x * 0.0018
+    m.velocity.z += wind.z * 0.0018
     m.position.x += m.velocity.x
     m.position.z += m.velocity.z
     m.groundX = m.position.x
     m.groundZ = m.position.z
-    m.position.y = Math.max(0.35, m.alt * dropHeight)
+    m.position.y = Math.max(0, m.alt * dropHeight)
     m.rot += m.spin
 
     const nearShelter = m.alt < 0.45 && findShelterProximityDetonation({

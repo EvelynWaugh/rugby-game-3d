@@ -7,7 +7,8 @@ import { LevelClear } from '@/components/ui/level-clear'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { StartMenu } from '@/components/ui/start-menu'
 import { useModelPreload } from '@/hooks/use-model-preload'
-import { getModelPreloadStatus } from '@/systems/preload-models'
+import { ModelErrorBoundary } from '@/components/models/model-error-boundary'
+import { PreloadModel } from '@/components/models/preload-model'
 import { useGameStore } from '@/stores/use-game-store'
 
 const GameScene = lazy(() =>
@@ -33,7 +34,7 @@ export function GameShell() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (!getModelPreloadStatus().ready) return
+      if (e.repeat || !assets.ready) return
 
       const state = useGameStore.getState()
 
@@ -53,8 +54,9 @@ export function GameShell() {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
           setStartSel(1 - state.startSel)
         }
-        if (e.key.toLowerCase() === 'l' || e.key === '5') {
+        if (e.key.toLowerCase() === 'l' || e.key === '4') {
           setStartSel(1)
+          setBossRoundOnly(true)
           setGameState('difficulty')
         }
         if (e.key === ' ' || e.key === 'Enter') {
@@ -62,9 +64,11 @@ export function GameShell() {
           setGameState('difficulty')
         }
       } else if (state.gameState === 'levelclear' && (e.key === ' ' || e.key === 'Enter')) {
-        resetGame()
+        state.nextLevel()
       } else if ((state.gameState === 'gameover' || state.gameState === 'victory') && (e.key === ' ' || e.key === 'Enter')) {
         resetGame()
+      } else if (state.gameState === 'playing' && e.code === 'KeyV') {
+        state.patch({ downView: !state.downView })
       } else if (state.gameState === 'playing' && e.key === ' ') {
         e.preventDefault()
         useGameStore.getState().queueDrop()
@@ -74,6 +78,7 @@ export function GameShell() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [
+    assets.ready,
     setDiffSel,
     setDifficulty,
     setGameState,
@@ -87,6 +92,12 @@ export function GameShell() {
   if (!assets.ready) {
     return (
       <div className="relative h-full w-full overflow-hidden">
+        <ModelErrorBoundary key={assets.attempt} fallback={null}
+          onError={() => assets.setError(`Failed to load ${assets.item}`)}>
+          <Suspense fallback={null}>
+            <PreloadModel path={assets.path} onLoaded={assets.onLoaded} />
+          </Suspense>
+        </ModelErrorBoundary>
         <LoadingScreen
           progress={assets.progress}
           loaded={assets.loaded}
@@ -134,7 +145,7 @@ export function GameShell() {
           levelName={levelData.name}
           clearMessage={levelData.clear}
           score={score}
-          onContinue={resetGame}
+          onContinue={useGameStore.getState().nextLevel}
         />
       )}
 

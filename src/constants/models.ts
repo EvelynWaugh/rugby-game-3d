@@ -130,6 +130,13 @@ export const ENV_MODELS = {
   terrain: { path: '/models/terrain/terrain.glb', targetSize: 16 },
 } as const satisfies Record<string, ModelFitConfig>
 
+export const HAZARD_MODELS = {
+  patrol: { path: '/models/warpigpatrol/warpigpatrol.glb', targetSize: 3.2 },
+  jammer: { path: '/models/ewjammer/ewjammer.glb', targetSize: 5 },
+  drone: { path: '/models/soviet-drone/soviet-drone.glb', targetSize: 1.6 },
+  net: { path: '/models/soviet-drone/cargo-net.glb', targetSize: 1.8 },
+} as const satisfies Record<string, ModelFitConfig>
+
 export const ALL_MODEL_PATHS = [
   DRONE_MODEL.path,
   BALL_MODEL.path,
@@ -137,5 +144,6 @@ export const ALL_MODEL_PATHS = [
   PIG_MODEL.path,
   SHELTER_MODEL.path,
   RAT_MODEL.path,
+  ...Object.values(HAZARD_MODELS).map((m) => m.path),
   ...Object.values(ENV_MODELS).map((m) => m.path),
 ]

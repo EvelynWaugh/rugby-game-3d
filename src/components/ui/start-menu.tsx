@@ -20,7 +20,7 @@ export function StartMenu({ startSel, onSelectChange, onContinue }: StartMenuPro
         </p>
 
         <div className="mt-6 flex flex-col gap-2">
-          {['FULL CAMPAIGN', 'BOSS ROUND — LEVEL 5'].map((label, i) => (
+          {['FULL CAMPAIGN', 'FINAL SECTOR — LEVEL 4'].map((label, i) => (
             <button
               key={label}
               type="button"
@@ -45,7 +45,7 @@ export function StartMenu({ startSel, onSelectChange, onContinue }: StartMenuPro
         </button>
 
         <p className="mono mt-4 text-xs text-slate-500">
-          ↑/↓ forward & back · ←/→ turn (360°) · R/F altitude · SPACE drop
+          ↑/↓ forward & back · ←/→ turn (360°) · R/F altitude · SPACE drop · V overhead view
         </p>
       </div>
     </div>

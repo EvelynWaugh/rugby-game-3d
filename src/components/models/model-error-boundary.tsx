@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react'
 
 interface ModelErrorBoundaryProps {
+  onError?: (error: Error) => void
   fallback: ReactNode
   children: ReactNode
 }
@@ -17,6 +18,10 @@ export class ModelErrorBoundary extends Component<ModelErrorBoundaryProps, Model
 
   static getDerivedStateFromError() {
     return { hasError: true }
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError?.(error)
   }
 
   render() {

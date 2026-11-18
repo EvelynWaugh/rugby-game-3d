@@ -14,7 +14,7 @@ export function LevelClear({ levelName, clearMessage, score, onContinue }: Level
         <p className="mt-2 text-sm text-slate-400">{clearMessage}</p>
         <p className="mono mt-4 text-lg text-[#f39200]">SCORE: {score}</p>
         <p className="mono mt-2 text-xs text-slate-500">
-          Level 2+ coming in next iteration. Press SPACE or click to return to menu.
+          Press Space to enter the next sector.
         </p>
         <button
           type="button"

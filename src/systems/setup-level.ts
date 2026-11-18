@@ -1,5 +1,5 @@
 import { DIFFICULTIES } from '@/constants/difficulty'
-import { DRONE_CRUISE_SPEED, PIG_WALK_SPEED, RAT_WALK_SPEED } from '@/constants/game'
+import { DRONE_CRUISE_SPEED, ENTRANCE_TICKS, PIG_WALK_SPEED, RAT_WALK_SPEED } from '@/constants/game'
 import { SHELTER_INTERIOR_RATIO, SHELTER_WORLD } from '@/constants/models'
 import { droneForwardVector } from '@/systems/update-drone'
 import { getLevelPath, samplePath, spawnAlongPath } from '@/systems/path-system'
@@ -29,7 +29,8 @@ export function makeDrone(difficulty: DifficultyKey, curve: CatmullRomCurve3, mu
     altitudeVel: 0,
     yaw,
     yawVel: 0,
-    grounded: 0,
+    entranceTicks: ENTRANCE_TICKS,
+    netTicks: 0,
   }
 }
 
@@ -95,6 +96,7 @@ function makeSoldier({
     cool: rand(60, 180) * coolScale,
     dead: false,
     pig,
+    patrol: false,
     immune: lvImmune,
     visible: true,
     behavior: 'biped',
@@ -134,7 +136,7 @@ export function spawnEntitiesForLevel({
   curve: CatmullRomCurve3
 }) {
   const ds = DIFFICULTIES[difficulty]
-  const lvImmune = level === 5
+  const lvImmune = false
   const soldiers: Soldier[] = []
   const shelters: Shelter[] = []
   const enemyDrones: EnemyDrone[] = []
@@ -184,6 +186,16 @@ export function spawnEntitiesForLevel({
             lvImmune,
           }),
     )
+  }
+
+  for (let i = 0; i < levelData.patrols; i++) {
+    const pos = spawnAlongPath({ curve, pathT: evenPathT(i, levelData.patrols, 0.18, 0.8), lateral: 3 })
+    const patrol = makeSoldier({
+      idPrefix: 'patrol', pos, pig: true, hp: 2, walkSpeed: PIG_WALK_SPEED,
+      coolScale: ds.enemyRate, cowardChance: 0, catchChance: 0, lvImmune: false,
+    })
+    patrol.patrol = true
+    soldiers.push(patrol)
   }
 
   const { w, h, d } = SHELTER_WORLD
@@ -243,7 +255,7 @@ export function spawnEntitiesForLevel({
     ewTowers.push({
       id: uid('ew'),
       position: { x: pos.x, y: 1, z: pos.z },
-      r: rand(9, 13),
+      r: 18,
       hp: 30,
       maxhp: 30,
       dead: false,

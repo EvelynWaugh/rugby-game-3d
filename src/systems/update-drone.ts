@@ -12,6 +12,7 @@ import {
   DRONE_YAW_ACCEL,
   DRONE_YAW_DAMPING,
   DRONE_YAW_MAX,
+  MAP,
   MAX_ALTITUDE,
   MIN_ALTITUDE,
 } from '@/constants/game'
@@ -54,7 +55,6 @@ export function updateDrone({
   wind,
   levelData,
   ewActive,
-  frame,
   difficulty,
 }: {
   drone: Drone
@@ -62,19 +62,17 @@ export function updateDrone({
   wind: Wind
   levelData: LevelConfig
   ewActive: boolean
-  frame: number
   difficulty: keyof typeof DIFFICULTIES
 }) {
-  if (drone.grounded > 0) {
-    drone.grounded--
-    const { forwardSpeed, lateralSpeed } = decomposeHorizVelocity(drone, drone.yaw)
-    setHorizVelocity(drone, drone.yaw, forwardSpeed * 0.9, lateralSpeed * 0.35)
-    drone.yawVel *= 0.85
-    drone.position.x += drone.velocity.x
-    drone.position.z += drone.velocity.z
+  if (drone.netTicks > 0) {
+    drone.netTicks--
+    drone.velocity = { x: 0, y: -0.025, z: 0 }
+    drone.yawVel = 0
+    applyFlightLimits(drone)
     return
   }
 
+  if (input.forward || input.yaw || input.altitude) drone.entranceTicks = 0
   const horizSpeed = Math.hypot(drone.velocity.x, drone.velocity.z)
 
   if (input.yaw !== 0) {
@@ -102,17 +100,19 @@ export function updateDrone({
     drone.velocity.z += wind.z * 0.003
   }
 
-  if (ewActive && frame % 10 === 0) {
-    drone.velocity.x += (Math.random() - 0.5) * 0.012
-    drone.velocity.z += (Math.random() - 0.5) * 0.012
-  }
+  if (ewActive) drone.velocity.y -= 0.006
 
   let { forwardSpeed, lateralSpeed } = decomposeHorizVelocity(drone, drone.yaw)
   lateralSpeed *= 1 - DRONE_LATERAL_DAMP
   forwardSpeed *= DRONE_FRICTION
   lateralSpeed *= DRONE_FRICTION
-  if (input.forward === 0)
-    forwardSpeed += (DRONE_CRUISE_SPEED - forwardSpeed) * 0.12
+  if (drone.entranceTicks > 0) {
+    drone.entranceTicks--
+    forwardSpeed = DRONE_CRUISE_SPEED
+  } else if (input.forward === 0) {
+    forwardSpeed *= 0.84
+    if (Math.abs(forwardSpeed) < 0.0001) forwardSpeed = 0
+  }
   drone.velocity.y *= DRONE_VERTICAL_FRICTION
   drone.velocity.y = clamp(drone.velocity.y, -DRONE_MAX_VERTICAL_SPEED, DRONE_MAX_VERTICAL_SPEED)
 
@@ -125,21 +125,30 @@ export function updateDrone({
 
   setHorizVelocity(drone, drone.yaw, forwardSpeed, lateralSpeed)
 
-  drone.position.x += drone.velocity.x
-  drone.position.y += drone.velocity.y
-  drone.position.z += drone.velocity.z
-
-  const prevY = drone.position.y
-  drone.position.y = clamp(drone.position.y, MIN_ALTITUDE, MAX_ALTITUDE)
-  if (drone.position.y !== prevY) drone.velocity.y *= 0.35
-
-  drone.altitude = drone.position.y
+  applyFlightLimits(drone)
 
   // Motors stay on while airborne — drain on hover and extra while moving
   const drain = DRONE_BATTERY_DRAIN * DIFFICULTIES[difficulty].battery
   drone.hp -= drain * (0.85 + horizSpeed * 0.35 + Math.abs(drone.velocity.y) * 0.1)
 
   if (drone.hit > 0) drone.hit--
+}
+
+function applyFlightLimits(drone: Drone) {
+  const { position, velocity } = drone
+  position.x += velocity.x
+  position.z += velocity.z
+  position.y += velocity.y
+  const x = clamp(position.x, MAP.minX + 0.3, MAP.maxX - 0.3)
+  const z = clamp(position.z, MAP.minZ + 0.3, MAP.maxZ - 0.3)
+  if (x !== position.x) velocity.x = 0
+  if (z !== position.z) velocity.z = 0
+  position.x = x
+  position.z = z
+  if (position.y <= MIN_ALTITUDE) drone.hp = 0
+  if (position.y >= MAX_ALTITUDE) velocity.y = 0
+  position.y = clamp(position.y, MIN_ALTITUDE, MAX_ALTITUDE)
+  drone.altitude = position.y
 }
 
 export function computeWind({
@@ -158,7 +167,7 @@ export function computeWind({
   const ds = DIFFICULTIES[difficulty]
   const nextPhase = windPhase + 0.008
   const wind: Wind = {
-    x: (Math.sin(nextPhase) * 1.4 + (level >= 5 ? Math.sin(nextPhase * 2.3) * 0.8 : 0)) * ds.wind,
+    x: (Math.sin(nextPhase) * 1.4 + (level >= 3 ? Math.sin(nextPhase * 2.3) * 0.8 : 0)) * ds.wind,
     z: Math.cos(nextPhase * 0.7) * 0.5 * ds.wind,
   }
   return { wind, windPhase: nextPhase }

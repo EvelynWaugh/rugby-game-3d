@@ -207,7 +207,7 @@ export function updateSoldiers({
     if (s.behavior !== 'shoot') {
       let flee = false
       for (const m of munitions) {
-        if (m.alt < 0.4 && distXZ(s.position, m.position) < 9) {
+        if (!s.patrol && m.alt < 0.4 && distXZ(s.position, m.position) < 9) {
           startFlee(s, s.position.x - m.position.x, s.position.z - m.position.z, PIG_RUN_SPEED)
           flee = true
           break

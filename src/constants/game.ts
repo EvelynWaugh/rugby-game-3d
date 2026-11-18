@@ -13,7 +13,10 @@ export const DRONE_YAW_DAMPING = 0.9
 export const DRONE_YAW_MAX = 0.038
 export const DRONE_BATTERY_DRAIN = 0.009
 export const DRONE_MAX_SPEED = 0.18
-/** Idle cruise after spawn — half of max so the drone flies without stick input */
+/** Short level entrance, canceled by any flight input. */
+export const ENTRANCE_TICKS = 90
+export const NET_HOLD_TICKS = 180
+export const MAP = { minX: -100, maxX: 100, minZ: -540, maxZ: 60 } as const
 export const DRONE_CRUISE_SPEED = DRONE_MAX_SPEED * 0.5
 export const DRONE_MAX_VERTICAL_SPEED = 0.07
 /** Propeller spin (rad/s) — idle hover vs full cruise */
@@ -29,7 +32,7 @@ export const DRONE_LATERAL_DAMP = 0.82
 export const DRONE_YAW_SPEED = 0.045
 export const LANE_HALF = 25
 /** Low enough to dive into pigs; high enough that props clear the ground */
-export const MIN_ALTITUDE = 0.5
+export const MIN_ALTITUDE = 0.21
 export const MAX_ALTITUDE = 40
 export const PIG_WALK_SPEED = 0.032
 export const RAT_WALK_SPEED = 0.014

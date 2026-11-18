@@ -10,7 +10,11 @@ GLB binaries are gitignored (too large) but **must exist locally** for the game 
 | `pig/pig.glb` | Skinned pig — all animation clips in one file |
 | `shelter/shelter.glb` | Destructible bunker (replaces the box placeholder) |
 | `rat/rat.glb` | Skinned rats that patrol inside shelters |
-| `trees/green-tree.glb` | Roadside trees on Outskirts |
+| `warpigpatrol/warpigpatrol.glb` | Armed patrol in sectors 2–4 |
+| `ewjammer/ewjammer.glb` | Signal jammer in sectors 3–4 |
+| `soviet-drone/soviet-drone.glb` | Net carrier in sector 4 |
+| `soviet-drone/cargo-net.glb` | Carried, released and attached cargo net |
+| `trees/green-tree.glb` | Roadside trees that fall after a nearby blast |
 | `trees/fallen-tree.glb` | Fallen log props |
 | `trees/fallen-tree-2.glb` | Flat fallen-tree scatter |
 | `trees/fallen-tree-3.glb` | Standing snag / leaning trunk |

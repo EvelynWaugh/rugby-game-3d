@@ -1,3 +1,4 @@
+import { FINAL_LEVEL } from '@/constants/levels'
 import type { Drone, EnemyDrone, EwTower, LevelConfig, Munition, Shelter, Soldier } from '@/types/game'
 
 export type WinCheckResult = 'playing' | 'levelclear' | 'victory' | 'gameover'
@@ -36,7 +37,7 @@ export function checkWin({
       won = eActive === 0 && shActive === 0 && sActive === 0
       break
     case 'ewtargets':
-      won = tActive === 0 && sActive === 0 && shActive === 0
+      won = tActive === 0 && eActive === 0 && sActive === 0 && shActive === 0
       break
     case 'command': {
       const cmd = shelters.find((s) => s.command)
@@ -48,7 +49,7 @@ export function checkWin({
       break
   }
 
-  if (won) return level >= 5 ? 'victory' : 'levelclear'
+  if (won) return level >= FINAL_LEVEL ? 'victory' : 'levelclear'
   return 'playing'
 }
 

@@ -1,7 +1,9 @@
-import { LEVELS } from '@/constants/levels'
+import { FINAL_LEVEL, LEVELS } from '@/constants/levels'
 import { getLevelPath } from '@/systems/path-system'
 import type { DifficultyKey, Drone, GameState, LevelConfig } from '@/types/game'
 import type {
+  BlastMark,
+  CargoNet,
   Bullet,
   EnemyDrone,
   EwTower,
@@ -36,6 +38,10 @@ export interface GameStoreState {
   particles: Particle[]
   smoke: Smoke[]
   pigParts: PigPart[]
+  cargoNets: CargoNet[]
+  blastMarks: BlastMark[]
+  fallenTrees: number[]
+  downView: boolean
   wind: Wind
   windPhase: number
   ewActive: boolean
@@ -78,6 +84,10 @@ const initialMenuState = {
   particles: [] as Particle[],
   smoke: [] as Smoke[],
   pigParts: [] as PigPart[],
+  cargoNets: [] as CargoNet[],
+  blastMarks: [] as BlastMark[],
+  fallenTrees: [] as number[],
+  downView: false,
   wind: { x: 0, z: 0 },
   windPhase: 0,
   ewActive: false,
@@ -121,7 +131,7 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
 
       const difficulty = get().difficulty
       const curve = getLevelPath(level)
-      const drone = makeDrone(difficulty, curve, levelData.muni, level === 5)
+      const drone = makeDrone(difficulty, curve, levelData.muni)
       const entities = spawnEntitiesForLevel({ level, levelData, difficulty, curve })
 
       set(() => ({
@@ -137,6 +147,10 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
         particles: [],
         smoke: [],
         pigParts: [],
+        cargoNets: [],
+        blastMarks: [],
+        fallenTrees: [],
+        downView: false,
         wind: { x: 0, z: 0 },
         windPhase: 0,
         ewActive: false,
@@ -155,14 +169,14 @@ export function createGameStore(set: (fn: (state: GameStoreState) => Partial<Gam
 
     startBossGame() {
       const state = get()
-      state.setupLevel(5)
+      state.setupLevel(FINAL_LEVEL)
       set(() => ({ gameState: 'playing', score: 0 }))
     },
 
     nextLevel() {
       const state = get()
       const next = state.level + 1
-      if (next > 5) {
+      if (next > FINAL_LEVEL) {
         set(() => ({ gameState: 'victory' }))
         return
       }

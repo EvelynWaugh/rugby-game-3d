@@ -2,7 +2,8 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import { PigAnimatedModel } from '@/components/models/pig-animated-model'
-import { type PigAnimKey } from '@/constants/models'
+import { StaticModel } from '@/components/models/static-model'
+import { HAZARD_MODELS, type PigAnimKey } from '@/constants/models'
 import type { Soldier } from '@/types/game'
 import { useGameStore } from '@/stores/use-game-store'
 
@@ -49,7 +50,6 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
   useFrame(() => {
     const soldier = useGameStore.getState().soldiers.find((s) => s.id === soldierId)
     if (!soldier || !groupRef.current) return
-    if (soldier.dead && soldier.deathTimer <= 0) return
 
     groupRef.current.position.set(soldier.position.x, soldier.position.y, soldier.position.z)
 
@@ -80,17 +80,20 @@ export function PigUnit({ soldierId, tint }: PigUnitProps) {
 
   const soldier = useGameStore((s) => s.soldiers.find((x) => x.id === soldierId))
   if (!soldier || soldier.visible === false) return null
-  if (soldier.dead && soldier.deathTimer <= 0) return null
 
   const animKey = pickAnimKey(soldier)
 
   return (
     <group ref={groupRef}>
-      <PigAnimatedModel
-        animKey={animKey}
-        showWeapon={showWeapon(soldier, animKey)}
-        fallback={<PlaceholderPig tint={tint} />}
-      />
+      {soldier.patrol ? (
+        <StaticModel {...HAZARD_MODELS.patrol} ground rotation={[0, 0, soldier.dead ? Math.PI / 2 : 0]} />
+      ) : (
+        <PigAnimatedModel
+          animKey={animKey}
+          showWeapon={showWeapon(soldier, animKey)}
+          fallback={<PlaceholderPig tint={tint} />}
+        />
+      )}
     </group>
   )
 }
